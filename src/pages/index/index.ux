@@ -15,13 +15,17 @@
         <text class="btn-text">查看成就</text>
       </div>
 
-      <!-- <div class="btn" onclick="showDeveloper"> 
+      <!-- 
+      <div class="btn" onclick="showDeveloper">
         <text class="btn-text">开发者</text>
       </div>
 
       <div class="btn" onclick="showSettings">
         <text class="btn-text">设置</text>
       </div>-->
+      <div class="btn" onclick="showDonation">
+        <text class="btn-text">捐献</text>
+      </div>
       <div class="btn" onclick="exitGame">
         <text class="btn-text">退出游戏</text>
       </div>
@@ -71,7 +75,12 @@ export default {
       params: {version: this.version}
     })
   },
-
+  showDonation() {
+    router.push({
+      uri: "pages/donation",
+      params: {version: this.version}
+    })
+  },
   showSettings() {
     router.push({
       uri: "pages/settings",
@@ -168,5 +177,4 @@ export default {
   word-break: break-word;
   padding: 5px 0;
 }
-
 </style>
