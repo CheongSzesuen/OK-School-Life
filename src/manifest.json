@@ -1,7 +1,7 @@
 {
   "package": "fun.okschoollife.mibandpro.beta",
-  "name": "Ok School Life",
-  "versionName": "0.2.2",
+  "name": "OK School Life",
+  "versionName": "0.2.3",
   "versionCode": 0.1,
   "minPlatformVersion": 1000,
   "icon": "/common/assets/icon/icon-v4-final.png",
@@ -69,6 +69,9 @@
       },
       "pages/donation": {
         "component": "donation"
+      },
+      "pages/about": {
+        "component": "about"
       }
     }
   }

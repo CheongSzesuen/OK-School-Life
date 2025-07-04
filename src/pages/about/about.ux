@@ -1,0 +1,193 @@
+<template>
+  <div class="container">
+    <!-- 头部 -->
+    <div class="header">
+      <div class="back-btn" onclick="routeBack">
+        <text class="back-icon">←</text>
+      </div>
+      <text class="title">关于</text>
+      <div class="empty-btn"></div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="main-area">
+      <!-- 程序信息卡片 -->
+      <div class="info-card">
+        <div class="info-top">
+          <text class="app-name">OK School Life</text>
+          <text class="app-version">beta {{ version }}</text>
+        </div>
+        <div class="info-bottom">
+          <div class="developer-info">
+            <text class="developer-name">WaiJade</text>
+            <text class="developer-name">StillAlive</text>
+          </div>
+          <image class="app-icon" src="../../common/assets/icon/icon-v4.png"></image>
+        </div>
+      </div>
+
+      <!-- 捐献按钮 -->
+      <div class="donate-btn" onclick="goToDonate">
+        <text class="donate-text">捐献支持</text>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import router from "@system.router"
+
+export default {
+  private: {
+    version: "",
+    name: ""
+  },
+
+  onInit() {
+    // 直接从路由参数获取版本和应用名称
+    this.version = this.$page.param.version
+    this.name = this.$page.param.name
+  },
+
+  routeBack() {
+    router.back()
+  },
+
+  goToDonate() {
+    router.push({
+      uri: "pages/donation",
+      params: {
+        version: this.version,
+        name: this.name
+      }
+    })
+  }
+}
+</script>
+
+<style>
+.container {
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  min-width: 336px;
+  min-height: 480px;
+  background-color: #1a2e22;
+  padding: 20px 10% 0;
+}
+
+.header {
+  width: 84%;
+  height: 80px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 0 8%;
+}
+
+.back-btn {
+  width: 70px;
+  height: 40px;
+  background-color: #53a47a;
+  border: 2px solid #b5dbc7;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  border-radius: 14px;
+}
+
+.back-icon {
+  font-size: 28px;
+  color: #e8f3f5;
+}
+
+.title {
+  font-size: 38px;
+  color: #e8f3f5;
+  font-weight: bold;
+  text-align: center;
+}
+
+.empty-btn {
+  width: 70px;
+}
+
+.main-area {
+  flex-direction: column;
+  align-items: center;
+  width: 90%;
+  height: 380px;
+  justify-content: space-between;
+}
+
+/* 信息卡片样式 */
+.info-card {
+  width: 100%;
+  height: 220px;
+  background-color: #69ba83;
+  border-radius: 20px;
+  padding: 20px 30px;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.info-top {
+  flex-direction: column;
+}
+
+.app-name {
+  font-size: 40px;
+  color: #e8f3f5;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.app-version {
+  font-size: 28px;
+  color: #e8f3f5;
+}
+
+.info-bottom {
+  width: 100%;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.developer-info {
+  flex-direction: column;
+}
+
+.developer-name {
+  font-size: 28px;
+  color: #e8f3f5;
+  font-weight: bold;
+  line-height: 34px;
+}
+
+.app-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  border: 2px solid #69ba83;
+}
+
+/* 捐献按钮样式 */
+.donate-btn {
+  width: 100%;
+  height: 80px;
+  background-color: #76bf73;
+  border-radius: 20px;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+}
+
+.donate-text {
+  font-size: 34px;
+  color: #e8f3f5;
+  font-weight: bold;
+}
+</style>

@@ -3,7 +3,7 @@
     <image class="logo" src="../../common/assets/icon/icon-v4.png"></image>
 
     <div class="header">
-      <text class="title">OK School Life</text>
+      <text class="title">{{ name }}</text>
       <text class="version">beta {{ version }}</text>
     </div>
 
@@ -23,8 +23,8 @@
       <div class="btn" onclick="showSettings">
         <text class="btn-text">设置</text>
       </div>-->
-      <div class="btn" onclick="showDonation">
-        <text class="btn-text">捐献</text>
+      <div class="btn" onclick="showAbout">
+        <text class="btn-text">关于</text>
       </div>
       <div class="btn" onclick="exitGame">
         <text class="btn-text">退出游戏</text>
@@ -36,15 +36,15 @@
 <script>
 import router from "@system.router"
 import app from "@system.app"
-import prompt from "@system.prompt"
-import storage from "@system.storage"
 
 const appInfo = app.getInfo()
 const version = appInfo.versionName
+const name = appInfo.name
 
 export default {
   private: {
-    version: version
+    version: version,
+    name: name
   },
 
   onInit() {
@@ -54,7 +54,11 @@ export default {
   startGame() {
     router.push({
       uri: "pages/main",
-      params: {newGame: true, version: this.version}
+      params: {
+        newGame: true,
+        version: this.version,
+        name: this.name
+      }
     })
   },
 
@@ -62,7 +66,6 @@ export default {
     router.push({
       uri: "/pages/achievement",
       params: {
-        // 只保留必要的调试信息
         source: "index",
         timestamp: Date.now()
       }
@@ -75,19 +78,18 @@ export default {
       params: {version: this.version}
     })
   },
-  showDonation() {
-    router.push({
-      uri: "pages/donation",
-      params: {version: this.version}
-    })
-  },
   showSettings() {
     router.push({
       uri: "pages/settings",
       params: {version: this.version}
     })
   },
-
+  showAbout() {
+    router.push({
+      uri: "pages/about",
+      params: {version: this.version, name: this.name}
+    })
+  },
   exitGame() {
     app.terminate()
   }
@@ -157,7 +159,7 @@ export default {
   min-height: 70px;
   margin-top: 25px;
   border-radius: 20px;
-  background-color: #41b876;
+  background-color: #69ba83;
   box-shadow: 0 5px 15px rgba(83, 164, 122, 0.4);
   justify-content: center;
   align-items: center;

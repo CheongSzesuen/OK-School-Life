@@ -212,15 +212,14 @@ export default {
 }
 
 .back-btn {
-  width: 80px;
-  height: 45px;
+  width: 70px;
+  height: 40px;
   background-color: #53a47a;
   border: 2px solid #b5dbc7;
   justify-content: center;
   align-items: center;
   display: flex;
-  border-radius: 16px;
-  margin-left: 0;
+  border-radius: 14px;
 }
 
 .back-icon {
@@ -297,7 +296,7 @@ export default {
   min-height: 70px;
   margin-top: 16px;
   border-radius: 24px;
-  background-color: #41b876;
+  background-color: #69ba83;
   justify-content: center;
   align-items: center;
   display: flex;

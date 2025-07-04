@@ -1,17 +1,17 @@
 <template>
   <div class="container">
-    <!-- 头部（与成就页面完全一致） -->
+    <!-- 头部 -->
     <div class="header">
       <div class="back-btn" onclick="routeBack">
         <text class="back-icon">←</text>
       </div>
-      <text class="title">支持开发</text>
+      <text class="title">捐赠支持</text>
       <div class="empty-btn"></div>
     </div>
 
     <!-- 主内容区 -->
     <div class="main-area">
-      <!-- 支付方式选择（水平排列） -->
+      <!-- 支付方式选择 -->
       <div class="payment-options">
         <div class="option wechat {{currentTab === 1 ? 'active' : ''}}" onclick="setTab(1)">
           <text>微信</text>
@@ -21,7 +21,7 @@
         </div>
       </div>
 
-      <!-- 二维码区域（放大尺寸） -->
+      <!-- 二维码区域（最大尺寸） -->
       <div class="qrcode-container">
         <image class="qrcode-image" if="{{currentTab === 0}}" src="../../common/assets/donationQRcode/alipay_qrcode.png">
         </image>
@@ -69,7 +69,7 @@ export default {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 10px; /* 减少间距 */
   padding: 0 8%;
 }
 
@@ -103,7 +103,7 @@ export default {
   width: 90%;
   flex-direction: column;
   align-items: center;
-  padding: 15px 0;
+  padding: 5px 0; /* 减少内边距 */
 }
 
 /* 支付选项样式 */
@@ -111,7 +111,7 @@ export default {
   flex-direction: row;
   width: 100%;
   justify-content: center;
-  margin-bottom: 25px;
+  margin-bottom: 15px; /* 减少间距 */
   padding: 0 5%;
 }
 
@@ -120,7 +120,7 @@ export default {
   height: 60px;
   justify-content: center;
   align-items: center;
-  margin: 0 10px;
+  margin: 0 15px;
   border-radius: 14px;
 }
 
@@ -138,33 +138,42 @@ export default {
 }
 
 .option.active {
-  background-color: #41b876;
+  background-color: #69ba83;
   box-shadow: 0 4px 8px rgba(65, 184, 118, 0.4);
 }
 
-/* 二维码区域（放大尺寸） */
+/* 二维码区域（最大尺寸） */
 .qrcode-container {
-  width: 300px;
-  height: 300px;
-  padding: 15px;
-  background-color: rgba(232, 243, 245, 0.15);
+  width: 340px; /* 最大尺寸 */
+  height: 340px; /* 保持1:1比例 */
+  padding: 10px;
+  background-color: #69ba83;
   border-radius: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 10px; /* 减少间距 */
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative; /* 为点赞图标定位 */
 }
 
 .qrcode-image {
-  width: 280px;
-  height: 280px;
-  border: 1px solid #69ba83;
+  width: 320px; /* 最大尺寸 */
+  height: 320px; /* 保持1:1比例 */
   border-radius: 12px;
+}
+
+/* 点赞图标 */
+.like-icon {
+  width: 40px;
+  height: 40px;
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
 }
 
 .thanks-text {
   font-size: 28px;
   color: #b5dbc7;
-  margin-top: 15px;
+  margin-top: 5px; /* 减少间距 */
 }
 </style>

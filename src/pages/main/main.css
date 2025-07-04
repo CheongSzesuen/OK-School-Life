@@ -1,3 +1,4 @@
+/* 基础容器样式 */
 .container {
     flex-direction: column;
     align-items: center;
@@ -11,56 +12,64 @@
     transition: transform 0.3s ease;
 }
 
+/* 顶部间距 */
 .spacer {
     height: 16px;
     width: 100%;
 }
 
+/* 头部区域 */
 .header {
-    width: 90%;
-    height: 70px;
+    width: 84%;
+    height: 80px;
     flex-direction: row;
     align-items: center;
-    justify-content: flex-start;
-    margin-bottom: 15px;
-    padding-left: 5%;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 0 8%;
 }
 
 .back-btn {
     width: 70px;
     height: 40px;
-    background-color: black;
-    border: 3px solid gray;
-    color: darkgray;
-    font-size: 26px;
+    background-color: #53a47a;
+    border: 2px solid #b5dbc7;
     justify-content: center;
     align-items: center;
     display: flex;
-    border-radius: 8px;
-    margin-left: 0;
+    border-radius: 14px;
 }
 
 .back-icon {
-    font-size: 26px;
-    color: darkgray;
+    font-size: 28px;
+    color: #e8f3f5;
 }
 
-.btn-active {
-    background-color: #333;
-}
-
-.back-button {
-    width: 70px;
+/* 详情按钮（三点菜单） */
+.detail-btn {
+    width: 40px;
     height: 40px;
-    position: relative;
-    top: 5px;
-    background-color: black;
-    border: 3px;
-    border-color: gray;
-    color: darkgray;
-    font-size: 26px;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    position: absolute;
+    right: 5%;
+    /* 从8%调整为5% */
+    top: 50%;
+    /* 垂直居中 */
+    transform: translateY(-50%);
+    /* 精确垂直居中 */
+    z-index: 10;
+    /* 确保在最上层 */
 }
 
+.detail-icon {
+    font-size: 28px;
+    color: #e8f3f5;
+    transform: rotate(90deg);
+}
+
+/* 主内容区域 */
 .main-area {
     flex-direction: column;
     align-items: center;
@@ -73,6 +82,7 @@
     margin-bottom: 30px;
 }
 
+/* 问题文本 */
 .question {
     font-size: 34px;
     color: #F8F8FF;
@@ -87,6 +97,7 @@
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
+/* 按钮容器 */
 .buttons {
     flex-direction: column;
     width: 100%;
@@ -96,14 +107,13 @@
     justify-content: flex-start;
 }
 
-
-
+/* 通用按钮样式 */
 .btn {
     width: 100%;
     min-height: 60px;
     margin-top: 20px;
     border-radius: 20px;
-    background-color: #41b876;
+    background-color: #69ba83;
     box-shadow: 0 5px 15px rgba(83, 164, 122, 0.4);
     justify-content: center;
     align-items: center;
@@ -124,10 +134,12 @@
     padding: 5px 0;
 }
 
+/* 按钮按下状态 */
 .btn-pressed {
     background-color: #3A8B63;
 }
 
+/* 错误提示 */
 .error-hint {
     color: #FF7E7E;
     text-align: center;
@@ -136,6 +148,7 @@
     letter-spacing: 1.2px;
 }
 
+/* 结果区域 */
 .result-area {
     margin-top: 28px;
     align-items: center;
@@ -159,6 +172,7 @@
     word-break: break-all;
 }
 
+/* 成就提示 */
 .achievement {
     font-size: 26px;
     color: #C8FFE8;
@@ -170,4 +184,37 @@
     background-color: rgba(200, 255, 232, 0.1);
     border-radius: 16px;
     width: 90%;
+}
+
+/* 空状态样式 */
+.empty-content {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.empty-text {
+    font-size: 28px;
+    color: #E8F3F5;
+    margin-top: 20px;
+}
+
+/* 刷新按钮 */
+.action-btn {
+    position: fixed;
+    right: 30px;
+    bottom: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 30px;
+    background-color: #1E90FF;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
+
+.refresh-icon {
+    font-size: 28px;
+    color: #FFFFFF;
 }
