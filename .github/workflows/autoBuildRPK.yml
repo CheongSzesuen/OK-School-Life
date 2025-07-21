@@ -10,10 +10,17 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TEMP_SIGN_DIR: ${{ github.workspace }}/.temp_sign
-      # Modified output filename to remove 'v' prefix
-      BUILD_OUTPUT: fun.okschoollife.mibandpro.beta.${{ github.ref_name#v }}.rpk
+      # We'll set BUILD_OUTPUT in a step below after processing the version
 
     steps:
+      # 0. Process version number (remove 'v' prefix)
+      - name: Process version number
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=${VERSION}" >> $GITHUB_ENV
+          echo "BUILD_OUTPUT=fun.okschoollife.mibandpro.beta.${VERSION}.rpk" >> $GITHUB_ENV
+
       # 1. 代码检出（保留完整git历史）
       - name: Checkout code
         uses: actions/checkout@v4
@@ -93,7 +100,7 @@ jobs:
           fi
           
           # 重命名输出文件
-          mv dist/*.rpk $BUILD_OUTPUT
+          mv dist/*.rpk ${{ env.BUILD_OUTPUT }}
 
       # 7. 精确匹配的更新日志生成
       - name: Generate precise changelog
