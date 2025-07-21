@@ -10,7 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TEMP_SIGN_DIR: ${{ github.workspace }}/.temp_sign
-      BUILD_OUTPUT: OK_School_Life-MiBand9Pro-${{ github.ref_name }}.rpk
+      # Modified output filename to remove 'v' prefix
+      BUILD_OUTPUT: fun.okschoollife.mibandpro.beta.${{ github.ref_name#v }}.rpk
 
     steps:
       # 1. 代码检出（保留完整git历史）

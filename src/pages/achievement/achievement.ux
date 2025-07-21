@@ -1,39 +1,37 @@
 <template>
-  <div class="container">
-    <!-- 头部 -->
-    <div class="header">
-      <div class="back-btn" onclick="routeBack">
-        <text class="back-icon">←</text>
-      </div>
-      <text class="title">成就</text>
-      <div class="clear-btn" onclick="clearAchievements">
-        <text class="clear-text">清除</text>
-      </div>
-    </div>
-
-    <div class="spacer"></div>
-
-    <!-- 主内容区 -->
-    <div class="main-area">
-      <!-- 加载状态 -->
-      <div class="loading-state" if="{{isLoading}}">
-        <text class="loading-text">加载中...</text>
-      </div>
-
-      <!-- 成就列表 -->
-      <div class="achievement-content" if="{{!isLoading}}">
-        <div class="achievement-list">
-          <div class="achievement-item" for="{{achievements}}">
-            <text class="achievement-text">{{ $item }}</text>
-          </div>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <image class="back-btn" src="../../common/assets/backButton/backButton.png" onclick="routeBack"></image>
+            <text class="title">成就</text>
+            <image class="clear-btn" src="../../common/assets/deleteButton/deleteButton.png" onclick="clearAchievements">
+            </image>
         </div>
 
-        <div class="empty-state" if="{{achievements.length === 0}}">
-          <text class="empty-text">暂无成就</text>
+        <!-- 主内容区 -->
+        <div class="main-area">
+            <!-- 加载状态 -->
+            <div class="loading-state" if="{{isLoading}}">
+                <text class="loading-text">加载中...</text>
+            </div>
+
+            <!-- 成就列表 -->
+            <div class="achievement-content" if="{{!isLoading}}">
+                <div class="achievement-list">
+                    <div class="achievement-item" for="{{achievements}}">
+                        <text class="achievement-text">{{ $item }}</text>
+                    </div>
+                </div>
+
+                <div class="empty-state" if="{{achievements.length === 0}}">
+                    <text class="empty-text">暂无成就</text>
+                </div>
+            </div>
         </div>
-      </div>
+
+        <!-- 新增空白footer -->
+        <div class="footer"></div>
     </div>
-  </div>
 </template>
 
 <script>
@@ -195,71 +193,40 @@ export default {
   padding: 0;
 }
 
-.spacer {
-  height: 20px;
-  width: 100%;
-  background-color: transparent;
-}
-
 .header {
-  width: 84%;
-  height: 80px;
+  width: 100%;
+  height: 120px;
   flex-direction: row;
-  align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
-  padding: 0 8%;
+  align-items: center;
+  padding: 0 25px;
 }
 
 .back-btn {
-  width: 70px;
-  height: 40px;
-  background-color: #53a47a;
-  border: 2px solid #b5dbc7;
-  justify-content: center;
-  align-items: center;
-  display: flex;
-  border-radius: 14px;
-}
-
-.back-icon {
-  font-size: 28px;
-  color: #e8f3f5;
+  width: 100px;
+  height: 100px;
+  margin-left: 10px;
 }
 
 .title {
   font-size: 36px;
   color: #bfe1d8;
   font-weight: bold;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .clear-btn {
   width: 100px;
-  height: 45px;
-  background-color: #76bf73;
-  border: none;
-  justify-content: center;
-  align-items: center;
-  display: flex;
-  border-radius: 16px;
-  box-shadow: 0 4px 8px rgba(118, 191, 115, 0.4);
-}
-
-.clear-text {
-  font-size: 26px;
-  color: #3a3f7c;
-  font-weight: 500;
+  height: 100px;
+  margin-right: 10px;
 }
 
 .main-area {
   flex-direction: column;
   align-items: center;
-  width: 88%;
-  border-radius: 24px;
+  width: 90%;
   flex-grow: 1;
-  padding: 5% 6%;
-  margin-bottom: 20px;
+  border-radius: 24px;
+  padding: 0 20px; /* 增加父容器内边距 */
   justify-content: flex-start;
   background-color: rgba(232, 243, 245, 0.1);
   backdrop-filter: blur(5px);
@@ -279,22 +246,22 @@ export default {
 }
 
 .achievement-content {
-  width: 94%;
+  width: 100%;
   flex-direction: column;
   display: flex;
-  margin-top: 10px;
 }
 
 .achievement-list {
   width: 100%;
   flex-direction: column;
   display: flex;
+  padding: 5px 0; /* 列表上下添加内边距 */
 }
 
 .achievement-item {
   width: 100%;
   min-height: 70px;
-  margin-top: 16px;
+  margin: 8px 0; /* 调整列表项上下间距 */
   border-radius: 24px;
   background-color: #69ba83;
   justify-content: center;
@@ -327,5 +294,11 @@ export default {
   font-size: 28px;
   color: #b5dbc7;
   opacity: 0.8;
+}
+
+.footer {
+  width: 100%;
+  height: 20px;
+  background-color: transparent;
 }
 </style>

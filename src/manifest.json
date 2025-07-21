@@ -1,7 +1,7 @@
 {
   "package": "fun.okschoollife.mibandpro.beta",
   "name": "OK School Life",
-  "versionName": "0.2.3",
+  "versionName": "0.3.0",
   "versionCode": 0.1,
   "minPlatformVersion": 1000,
   "icon": "/common/assets/icon/icon-v4-final.png",
@@ -60,9 +60,6 @@
       },
       "pages/main": {
         "component": "main"
-      },
-      "pages/developer": {
-        "component": "developer"
       },
       "pages/achievement": {
         "component": "achievement"

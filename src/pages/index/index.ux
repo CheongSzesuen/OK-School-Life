@@ -7,29 +7,22 @@
       <text class="version">beta {{ version }}</text>
     </div>
 
-    <div class="buttons">
-      <div class="btn" onclick="startGame">
-        <text class="btn-text">开始游戏</text>
-      </div>
-      <div class="btn" onclick="showAchievements">
-        <text class="btn-text">查看成就</text>
-      </div>
+    <!-- 使用list重构的按钮区域 -->
+    <list class="menu-list">
+      <list-item type="menu-btn" class="menu-item" onclick="startGame">
+        <text class="menu-text">开始游戏</text>
+      </list-item>
 
-      <!-- 
-      <div class="btn" onclick="showDeveloper">
-        <text class="btn-text">开发者</text>
-      </div>
-
-      <div class="btn" onclick="showSettings">
-        <text class="btn-text">设置</text>
-      </div>-->
-      <div class="btn" onclick="showAbout">
-        <text class="btn-text">关于</text>
-      </div>
-      <div class="btn" onclick="exitGame">
-        <text class="btn-text">退出游戏</text>
-      </div>
-    </div>
+      <list-item type="menu-btn" class="menu-item" onclick="showAchievements">
+        <text class="menu-text">查看成就</text>
+      </list-item>
+      <list-item type="menu-btn" class="menu-item" onclick="showAbout">
+        <text class="menu-text">关于</text>
+      </list-item>
+      <list-item type="menu-btn" class="menu-item" onclick="exitGame">
+        <text class="menu-text">退出游戏</text>
+      </list-item>
+    </list>
   </div>
 </template>
 
@@ -56,12 +49,10 @@ export default {
       uri: "pages/main",
       params: {
         newGame: true,
-        version: this.version,
-        name: this.name
+        version: this.version
       }
     })
   },
-
   showAchievements() {
     router.push({
       uri: "/pages/achievement",
@@ -71,23 +62,17 @@ export default {
       }
     })
   },
-
   showDeveloper() {
     router.push({
       uri: "pages/developer",
       params: {version: this.version}
     })
   },
-  showSettings() {
-    router.push({
-      uri: "pages/settings",
-      params: {version: this.version}
-    })
-  },
+
   showAbout() {
     router.push({
       uri: "pages/about",
-      params: {version: this.version, name: this.name}
+      params: {version: this.version}
     })
   },
   exitGame() {
@@ -131,7 +116,6 @@ export default {
   font-weight: bold;
   text-align: center;
   margin-bottom: 4px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .version {
@@ -142,41 +126,37 @@ export default {
   margin-bottom: 5px;
 }
 
-.buttons {
-  flex-direction: column;
+/* 使用list重构的菜单样式 */
+.menu-list {
   width: 94%;
-  /* 从90%调整为94% */
   max-width: 340px;
-  /* 从310px调整为340px */
+  height: 400px;
   margin-top: 10px;
   margin-bottom: 20px;
-  align-items: center;
-  justify-content: flex-start;
 }
 
-.btn {
+.menu-item {
   width: 100%;
-  min-height: 70px;
+  /* Changed from 90% to fill container */
+  height: 70px;
   margin-top: 25px;
   border-radius: 20px;
   background-color: #69ba83;
   box-shadow: 0 5px 15px rgba(83, 164, 122, 0.4);
+  /* Added subtle shadow */
   justify-content: center;
   align-items: center;
-  display: flex;
   padding: 10px 0;
   overflow: hidden;
 }
 
-.btn-text {
+.menu-text {
   font-size: 28px;
   color: #fff;
   font-weight: bold;
   letter-spacing: 2px;
-  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
   width: 95%;
   text-align: center;
-  word-break: break-word;
   padding: 5px 0;
 }
 </style>
