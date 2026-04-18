@@ -1,8 +1,8 @@
 {
-  "package": "fun.okschoollife",
+  "package": "cn.waijade.okschoollife",
   "name": "OK School Life",
-  "versionName": "0.3.3",
-  "versionCode": 0.1,
+  "versionName": "1.0.0",
+  "versionCode": 9,
   "minPlatformVersion": 1000,
   "icon": "/common/assets/icon/icon-v4-final.png",
   "deviceTypeList": [
@@ -13,31 +13,38 @@
       "name": "system.router"
     },
     {
+      "name": "system.prompt"
+    },
+    {
+      "name": "system.app"
+    },
+    {
       "name": "system.storage"
     },
     {
-      "name": "system.prompt"
-    },
-      {
-        "name": "system.app"
-      }
+      "name": "system.device"
+    }
   ],
   "config": {
     "logLevel": "log",
-    "designWidth": 480
+    "designWidth": "device-width"
   },
   "permissions": [
+    {
+      "name": "hapjs.permission.DEVICE_INFO"
+    }
   ],
   "resources": {
     "files": [
-      "$src/common/data/events.json"
+      "$src/common/data/events.json",
+      "$src/common/data/sentences.json"
     ]
   },
   "router": {
-    "entry": "pages/load",
+    "entry": "pages/entry",
     "pages": {
-      "pages/load": {
-        "component": "load"
+      "pages/entry": {
+        "component": "entry"
       },
       "pages/index": {
         "component": "index"
@@ -48,11 +55,14 @@
       "pages/achievement": {
         "component": "achievement"
       },
+      "pages/about": {
+        "component": "about"
+      },
       "pages/donation": {
         "component": "donation"
       },
-      "pages/about": {
-        "component": "about"
+      "pages/setting": {
+        "component": "setting"
       }
     }
   }

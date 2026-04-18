@@ -1,13 +1,14 @@
 <template>
   <div class="container">
-    <image class="logo" src="../../common/assets/icon/icon-v4.png"></image>
+    <div class="hero">
+      <image class="logo" src="../../common/assets/icon/icon-v4.png"></image>
 
-    <div class="header">
-      <text class="title">{{ name }}</text>
-      <text class="version">beta {{ version }}</text>
+      <div class="header">
+        <text class="title">OK School Life</text>
+        <text class="version">{{ version }}</text>
+      </div>
     </div>
 
-    <!-- 使用list重构的按钮区域 -->
     <list class="menu-list">
       <list-item type="menu-btn" class="menu-item" onclick="startGame">
         <text class="menu-text">开始游戏</text>
@@ -16,9 +17,11 @@
       <list-item type="menu-btn" class="menu-item" onclick="showAchievements">
         <text class="menu-text">查看成就</text>
       </list-item>
+
       <list-item type="menu-btn" class="menu-item" onclick="showAbout">
         <text class="menu-text">关于</text>
       </list-item>
+
       <list-item type="menu-btn" class="menu-item" onclick="exitGame">
         <text class="menu-text">退出游戏</text>
       </list-item>
@@ -30,18 +33,21 @@
 import router from "@system.router"
 import app from "@system.app"
 
-const appInfo = app.getInfo()
-const version = appInfo.versionName
-const name = appInfo.name
+const manifest = require("../../manifest.json")
+const versionName = manifest.versionName || ""
+const versionCode = manifest.versionCode
+const version = versionName ? `v${versionName}(${versionCode})` : ""
 
 export default {
   private: {
-    version: version,
-    name: name
+    version: ""
   },
 
   onInit() {
-    console.log("首页初始化完成")
+    console.log("[index] manifest versionName:", versionName)
+    console.log("[index] manifest versionCode:", versionCode)
+    console.log("[index] formatted version:", version)
+    this.version = version
   },
 
   startGame() {
@@ -53,28 +59,23 @@ export default {
       }
     })
   },
+
   showAchievements() {
     router.push({
       uri: "/pages/achievement",
       params: {
-        source: "index",
-        timestamp: Date.now()
+        version: this.version
       }
-    })
-  },
-  showDeveloper() {
-    router.push({
-      uri: "pages/developer",
-      params: {version: this.version}
     })
   },
 
   showAbout() {
     router.push({
       uri: "pages/about",
-      params: {version: this.version}
+      params: { version: this.version }
     })
   },
+
   exitGame() {
     app.terminate()
   }
@@ -88,75 +89,290 @@ export default {
   justify-content: flex-start;
   width: 100%;
   height: 100%;
-  min-width: 336px;
-  min-height: 480px;
   background-color: #1a2e22;
   padding: 0;
 }
 
+.hero {
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 65px;
+  padding-bottom: 6px;
+}
+
 .logo {
-  width: 140px;
-  height: 140px;
-  border-radius: 30px;
-  margin-top: 40px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  border: 2px solid #69ba83;
+  width: 80px;
+  height: 80px;
+  border-radius: 16px;
+  object-fit: contain;
 }
 
 .header {
   flex-direction: column;
   align-items: center;
-  margin: 15px 0 10px;
+  justify-content: center;
   width: 90%;
+  margin: 9px 0 0;
 }
 
 .title {
-  font-size: 38px;
+  width: 100%;
+  font-size: 22px;
+  line-height: 26px;
   color: #f8f8ff;
   font-weight: bold;
   text-align: center;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .version {
-  font-size: 20px;
+  width: 100%;
+  font-size: 11px;
+  line-height: 14px;
   color: #b4ffba;
   text-align: center;
-  letter-spacing: 1.2px;
-  margin-bottom: 5px;
+  letter-spacing: 0.7px;
 }
 
-/* 使用list重构的菜单样式 */
 .menu-list {
-  width: 94%;
-  max-width: 340px;
-  height: 400px;
-  margin-top: 10px;
-  margin-bottom: 20px;
+  width: 80%;
+  height: 100%;
+  padding: 0;
+  margin-top: 8px;
+  margin-bottom: 0;
 }
 
 .menu-item {
+  flex-direction: row;
   width: 100%;
-  /* Changed from 90% to fill container */
-  height: 70px;
-  margin-top: 25px;
-  border-radius: 20px;
+  height: 40px;
+  margin-top: 14px;
+  border-radius: 11px;
   background-color: #69ba83;
-  box-shadow: 0 5px 15px rgba(83, 164, 122, 0.4);
-  /* Added subtle shadow */
+  box-shadow: 0 3px 9px rgba(83, 164, 122, 0.4);
   justify-content: center;
   align-items: center;
-  padding: 10px 0;
+  padding: 6px 0;
   overflow: hidden;
 }
 
 .menu-text {
-  font-size: 28px;
+  width: 95%;
+  padding: 5px 0;
+  font-size: 16px;
+  line-height: 20px;
   color: #fff;
   font-weight: bold;
-  letter-spacing: 2px;
-  width: 95%;
+  letter-spacing: 1px;
   text-align: center;
-  padding: 5px 0;
+  white-space: normal;
+  word-break: break-word;
+}
+
+@media (width: 106) {
+  .hero {
+    padding-top: 40px;
+  }
+
+  .menu-list {
+    width: 80%;
+    margin-top: 10px;
+  }
+
+  .logo {
+    width: 88px;
+    height: 88px;
+    border-radius: 18px;
+  }
+
+  .header {
+    margin: 10px 0 7px;
+  }
+
+  .title {
+    font-size: 24px;
+    line-height: 28px;
+    margin-bottom: 3px;
+  }
+
+  .version {
+    font-size: 12px;
+    line-height: 15px;
+  }
+
+  .menu-item {
+    height: 44px;
+    margin-top: 15px;
+    border-radius: 12px;
+    padding: 7px 0;
+  }
+
+  .menu-text {
+    font-size: 18px;
+    line-height: 22px;
+  }
+}
+
+@media (width: 160) {
+  .hero {
+    padding-top: 40px;
+    padding-bottom: 10px;
+  }
+
+  .menu-list {
+    width: 94%;
+    max-width: 340px;
+    height: 400px;
+    margin-top: 10px;
+  }
+
+  .logo {
+    width: 140px;
+    height: 140px;
+    border-radius: 30px;
+  }
+
+  .header {
+    width: 90%;
+    margin: 15px 0 10px;
+  }
+
+  .title {
+    font-size: 38px;
+    line-height: 44px;
+    margin-bottom: 4px;
+    text-shadow: none;
+  }
+
+  .version {
+    font-size: 20px;
+    line-height: 24px;
+    letter-spacing: 1.2px;
+    margin-bottom: 5px;
+  }
+
+  .menu-item {
+    height: 70px;
+    margin-top: 25px;
+    border-radius: 20px;
+    box-shadow: 0 5px 15px rgba(83, 164, 122, 0.4);
+    padding: 10px 0;
+  }
+
+  .menu-text {
+    width: 95%;
+    padding: 5px 0;
+    font-size: 28px;
+    line-height: 34px;
+    letter-spacing: 2px;
+  }
+}
+
+@media (width: 216) {
+  .hero {
+    padding-top: 42px;
+    padding-bottom: 12px;
+  }
+
+  .logo {
+    width: 156px;
+    height: 156px;
+    border-radius: 32px;
+  }
+
+  .header {
+    width: 92%;
+    margin: 16px 0 12px;
+  }
+
+  .title {
+    font-size: 42px;
+    line-height: 48px;
+    margin-bottom: 6px;
+  }
+
+  .version {
+    font-size: 22px;
+    line-height: 26px;
+    letter-spacing: 1.4px;
+  }
+
+  .menu-list {
+    width: 92%;
+    max-width: 380px;
+    margin-top: 12px;
+  }
+
+  .menu-item {
+    height: 78px;
+    margin-top: 24px;
+    border-radius: 22px;
+    padding: 10px 0;
+    box-shadow: 0 6px 16px rgba(83, 164, 122, 0.38);
+  }
+
+  .menu-text {
+    width: 96%;
+    font-size: 31px;
+    line-height: 36px;
+    letter-spacing: 2px;
+  }
+}
+
+@media (width: 233) {
+  .container {
+    padding-top: 18px;
+  }
+
+  .hero {
+    padding-top: 26px;
+    padding-bottom: 14px;
+  }
+
+  .logo {
+    width: 132px;
+    height: 132px;
+    border-radius: 28px;
+  }
+
+  .header {
+    width: 78%;
+    margin: 16px 0 12px;
+  }
+
+  .title {
+    font-size: 36px;
+    line-height: 42px;
+    margin-bottom: 6px;
+  }
+
+  .version {
+    font-size: 18px;
+    line-height: 22px;
+    letter-spacing: 1.1px;
+  }
+
+  .menu-list {
+    width: 72%;
+    margin-top: 8px;
+  }
+
+  .menu-item {
+    height: 72px;
+    margin-top: 20px;
+    border-radius: 22px;
+    padding: 10px 0;
+  }
+
+  .menu-text {
+    width: 94%;
+    font-size: 27px;
+    line-height: 32px;
+    letter-spacing: 1.6px;
+  }
 }
 </style>

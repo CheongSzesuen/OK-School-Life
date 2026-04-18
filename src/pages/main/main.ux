@@ -1,36 +1,116 @@
 <template>
-  <div class="container">
-    <!-- 顶部容器 -->
-    <div class="header">
-      <image class="back-btn" src="../../common/assets/backButton/backButton.png" onclick="backToindex"></image>
-      <image class="detail-btn" src="../../common/assets/detailButton/detailButton.png" onclick="goToAbout"></image>
-    </div>
-    <div class="main-area">
-      <text class="question" if="{{currentQuestion}}">{{ currentQuestion }}</text>
-      <div class="buttons-container">
-        <div class="buttons" if="{{showOptions}}">
-          <block for="{{options}}">
-            <div class="btn" onClick="onOptionClick($item.key)">
-              <text class="btn-text">{{ $item.text }}</text>
+  <stack class="container">
+    <scroll class="main-shell {{ isPillScreen ? 'main-shell-pill' : '' }}" scroll-y="true">
+      <div class="main-frame {{ isPillScreen ? 'main-frame-pill' : '' }}">
+        <div class="main-area {{ isPillScreen ? 'main-area-pill' : '' }}">
+          <text class="question" if="{{ currentQuestion }}">
+            {{ currentQuestion }}
+          </text>
+
+          <div class="content-area">
+            <div class="options-list" if="{{ showOptions }}">
+              <div
+                for="{{ options }}"
+                class="btn {{ isPillScreen ? 'btn-pill' : '' }}"
+                onclick="onOptionClick($item.key)"
+              >
+                <div class="btn-content {{ isPillScreen ? 'btn-content-pill' : '' }}">
+                  <marquee class="btn-marquee {{ isPillScreen ? 'btn-marquee-pill' : '' }}" scrollamount="{{ marqueeSpeed }}" loop="-1">
+                    {{ $item.text }}
+                  </marquee>
+                </div>
+              </div>
             </div>
-          </block>
-          <text if="!options || options.length === 0" class="error-hint">暂无有效选项</text>
+
+            <div class="result-container" if="{{ showResult }}">
+              <text class="result">{{ resultText }}</text>
+              <div class="achievement-box" if="{{ achievementText }}">
+                <text class="achievement">{{ achievementText }}</text>
+              </div>
+              <div class="continue-btn" onclick="onContinue">
+                <text class="btn-text">继续</text>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="result-area" if="{{showResult}}">
-        <text class="result">{{ resultText }}</text>
-        <text class="achievement" if="{{achievementText}}">{{ achievementText }}</text>
-        <div class="btn" onClick="onContinue">
-          <text class="btn-text">继续</text>
-        </div>
+    </scroll>
+
+    <image
+      if="{{ isPillScreen }}"
+      class="pill-floating-btn"
+      style="{{ pillTopButtonStyle }}"
+      src="{{ backButtonSrc }}"
+      onclick="backToindex"
+    ></image>
+
+    <image
+      if="{{ isPillScreen }}"
+      class="pill-floating-btn"
+      style="{{ pillBottomButtonStyle }}"
+      src="{{ detailButtonSrc }}"
+      onclick="goToAbout"
+    ></image>
+
+    <image
+      if="{{ !isPillScreen && !isBand9Pro && !isCircleScreen }}"
+      class="back-btn"
+      src="{{ backButtonSrc }}"
+      onclick="backToindex"
+    ></image>
+
+    <image
+      if="{{ !isPillScreen && !isBand9Pro && !isCircleScreen }}"
+      class="detail-btn"
+      src="{{ detailButtonSrc }}"
+      onclick="goToAbout"
+    ></image>
+
+    <div class="pro-header" if="{{ isBand9Pro }}">
+      <div class="pro-header-center">
+        <text class="pro-header-time">{{ currentTime }}</text>
+        <text class="pro-header-title">游戏</text>
+      </div>
+      <image
+        class="pro-header-btn pro-header-btn-left"
+        src="/common/btn/rect/Back_T.png"
+        onclick="backToindex"
+      ></image>
+      <image
+        class="pro-header-btn pro-header-btn-right"
+        src="/common/btn/rect/More_B.png"
+        onclick="goToAbout"
+      ></image>
+    </div>
+
+    <div class="circle-header" if="{{ isCircleScreen }}">
+      <text class="circle-time circle-time1">{{ timeDigits[0] }}</text>
+      <text class="circle-time circle-time2">{{ timeDigits[1] }}</text>
+      <text class="circle-time circle-time3">:</text>
+      <text class="circle-time circle-time4">{{ timeDigits[2] }}</text>
+      <text class="circle-time circle-time5">{{ timeDigits[3] }}</text>
+      <div class="circle-page-title-wrap" onclick="backToindex">
+        <image class="circle-back-icon" src="/common/assets/btn/back.png"></image>
+        <text class="circle-page-title">游戏</text>
       </div>
     </div>
-  </div>
+  </stack>
 </template>
+
 <script>
 import router from "@system.router"
 import storage from "@system.storage"
 import eventsData from "../../common/data/events.json"
+import {
+  getCachedDeviceProfile,
+  loadDeviceProfile,
+  resolveLayoutClassByScreenWidth
+} from "../../common/utils/device"
+
+const manifest = require("../../manifest.json")
+const versionName = manifest.versionName || ""
+const versionCode = manifest.versionCode
+const formattedVersion = versionName ? `v${versionName}(${versionCode})` : ""
 
 export default {
   private: {
@@ -51,21 +131,146 @@ export default {
     school: "",
     achievedList: [],
     achievementMap: {},
-    version: "" // 添加版本号变量
+    version: formattedVersion,
+    deviceClass: "layout-rect device-unknown",
+    screenWidth: 160,
+    backButtonSrc: "/common/assets/backButton/backButton.png",
+    detailButtonSrc: "/common/assets/detailButton/detailButton.png",
+    pillTopButtonStyle: "",
+    pillBottomButtonStyle: "",
+    marqueeSpeed: 70,
+    speedUpdated: false,
+    isPillScreen: false,
+    isBand9Pro: false,
+    isCircleScreen: false,
+    screenShape: "rect",
+    currentTime: "",
+    timeDigits: ["0", "0", "0", "0"],
+    clockTimer: null
   },
 
   onInit() {
-    // 从路由参数中获取版本和名称
+    console.log("[main] manifest versionName:", versionName)
+    console.log("[main] manifest versionCode:", versionCode)
+    console.log("[main] formatted version:", formattedVersion)
+
     if (this.$page && this.$page.param) {
-      this.version = this.$page.param.version || ""
+      console.log("[main] page param version:", this.$page.param.version || "")
+      this.name = this.$page.param.name || ""
     }
 
     this.stage = "choose_school"
     this.usedRandomEvents = []
     this.eventIdx = 0
     this.eventsData = eventsData
+
+    const screenWidth = global.screenSize && global.screenSize.width
+    if (screenWidth) {
+      this.screenWidth = screenWidth
+      this.screenShape = global.screenShape || "rect"
+      this.deviceClass = resolveLayoutClassByScreenWidth(screenWidth)
+    } else {
+      const cached = getCachedDeviceProfile()
+      if (cached) {
+        this.screenWidth = cached.screenWidth
+        this.screenShape = cached.screenShape
+        this.deviceClass = cached.layoutClass
+      } else {
+        loadDeviceProfile((profile) => {
+          this.screenWidth = profile.screenWidth
+          this.screenShape = profile.screenShape
+          this.deviceClass = profile.layoutClass
+          this.updateButtonAssets()
+        })
+      }
+    }
+
+    this.updateButtonAssets()
+    this.startClock()
+
     this.loadAchievements()
+    this.loadMarqueeSpeed()
     this.showChooseSchool()
+  },
+
+  onDestroy() {
+    if (this.clockTimer) {
+      clearInterval(this.clockTimer)
+      this.clockTimer = null
+    }
+  },
+
+  startClock() {
+    this.updateCurrentTime()
+    if (!this.clockTimer) {
+      this.clockTimer = setInterval(() => {
+        this.updateCurrentTime()
+      }, 30000)
+    }
+  },
+
+  updateCurrentTime() {
+    const now = new Date()
+    const hours = `${now.getHours()}`.padStart(2, "0")
+    const minutes = `${now.getMinutes()}`.padStart(2, "0")
+    this.currentTime = `${hours}:${minutes}`
+    this.timeDigits = [hours[0], hours[1], minutes[0], minutes[1]]
+  },
+
+  updateButtonAssets() {
+    this.isPillScreen = this.screenWidth === 192 || this.screenWidth === 212
+    this.isCircleScreen = this.screenShape === "circle"
+    this.isBand9Pro =
+      this.screenWidth === 336 ||
+      this.screenWidth === 160 ||
+      this.screenWidth === 432 ||
+      this.screenWidth === 216
+
+    if (this.isPillScreen) {
+      const buttonWidth = 102
+      const buttonHeight = 72
+      const left = Math.max(0, Math.floor((this.screenWidth - buttonWidth) / 2))
+      this.pillTopButtonStyle = `position: absolute; top: 12px; left: ${left}px; width: ${buttonWidth}px; height: ${buttonHeight}px;`
+      this.pillBottomButtonStyle = `position: absolute; bottom: 12px; left: ${left}px; width: ${buttonWidth}px; height: ${buttonHeight}px;`
+      this.backButtonSrc = "/common/btn/Back_T.png"
+      this.detailButtonSrc = "/common/btn/More_T.png"
+      return
+    }
+
+    this.pillTopButtonStyle = ""
+    this.pillBottomButtonStyle = ""
+
+    if (this.isBand9Pro) {
+      this.backButtonSrc = "/common/btn/rect/Back_T.png"
+      this.detailButtonSrc = "/common/btn/rect/More_B.png"
+      return
+    }
+
+    this.backButtonSrc = "/common/assets/backButton/backButton.png"
+    this.detailButtonSrc = "/common/assets/detailButton/detailButton.png"
+  },
+
+  onShow() {
+    this.loadMarqueeSpeed()
+  },
+
+  loadMarqueeSpeed() {
+    storage.get({
+      key: "marquee_speed",
+      success: (data) => {
+        if (data !== undefined && data !== null && data !== "") {
+          const savedSpeed = parseInt(data)
+          if (!isNaN(savedSpeed)) {
+            this.marqueeSpeed = savedSpeed
+            this.speedUpdated = true
+            this.$forceUpdate()
+          }
+        }
+      },
+      fail: (err, code) => {
+        console.error("读取跑马灯速度失败:", code, err)
+      }
+    })
   },
 
   loadAchievements() {
@@ -79,7 +284,6 @@ export default {
               map[key] = true
               return map
             }, {})
-            console.log("加载的成就数据:", this.achievedList)
           } catch (e) {
             console.error("成就数据解析失败", e)
           }
@@ -92,14 +296,12 @@ export default {
   },
 
   saveAchievement(eventId, choiceKey) {
-    // 统一成就key格式：固定事件"event_X_Y_Z"，随机事件"random_X_Y"
     const isRandom = eventId.startsWith("random")
     const achievementKey = isRandom
       ? `random_${eventId.split("_")[1]}_${choiceKey}`
       : `event_${eventId.split("_")[1]}_${eventId.split("_")[2]}_${choiceKey}`
 
     if (this.achievementMap[achievementKey]) {
-      console.log("成就已存在:", achievementKey)
       return false
     }
 
@@ -110,8 +312,6 @@ export default {
       key: "achievements",
       value: JSON.stringify(this.achievedList),
       success: () => {
-        console.log("成就保存成功:", achievementKey)
-        // 触发成就页面更新
         this.$app.$def.achievementUpdated = true
       },
       fail: (err, code) => {
@@ -127,15 +327,12 @@ export default {
     this.stage = "choose_school"
     this.currentQuestion = "请选择你的入学学校："
     this.options = [
-      {key: "1", text: "羊县中学", group: "group_1"},
-      {key: "2", text: "闪西省汗忠中学", group: "group_2"},
-      {key: "3", text: "汗忠市龙港高级中学", group: "group_3"}
+      { key: "1", text: "羊县中学", group: "group_1" },
+      { key: "2", text: "闪西省汗忠中学", group: "group_2" },
+      { key: "3", text: "汗忠市龙港高级中学", group: "group_3" }
     ]
     this.showOptions = true
     this.showResult = false
-    this.resultText = ""
-    this.achievementText = ""
-    this.currentEvent = null
   },
 
   onOptionClick(key) {
@@ -144,7 +341,7 @@ export default {
     if (this.stage === "choose_school") {
       const selectedOption = this.options.find((opt) => opt.key === key)
       this.school = selectedOption.text
-      this.groupKey = selectedOption.group // 使用与学校绑定的固定事件组
+      this.groupKey = selectedOption.group
       this.eventIdx = 0
       this.stage = "fixed_event"
       this.showFixedEvent()
@@ -161,7 +358,6 @@ export default {
     if (this.eventIdx < group.length) {
       const event = group[this.eventIdx]
       this.currentEvent = event
-      //在加载时预处理去除 >>>
       this.currentQuestion = event.question.replace(/^>>>/, "")
 
       this.options = []
@@ -174,7 +370,6 @@ export default {
 
       this.showOptions = true
       this.showResult = false
-      this.achievementText = ""
     } else {
       this.stage = "random_event"
       this.showRandomEvent()
@@ -207,9 +402,13 @@ export default {
     if (event.achievements && event.achievements[key]) {
       const achievement = event.achievements[key]
       const isNew = this.saveAchievement(event.id, key)
-      const achievementStr = Array.isArray(achievement) ? achievement.join("、") : achievement
+      const achievementStr = Array.isArray(achievement)
+        ? achievement.join("、")
+        : achievement
 
-      this.achievementText = `获得成就：${achievementStr}${isNew ? "" : " (已获得)"}`
+      this.achievementText = `获得成就：${achievementStr}${
+        isNew ? "" : " (已获得)"
+      }`
     } else {
       this.achievementText = ""
     }
@@ -219,6 +418,11 @@ export default {
 
     if (event.end_game_choices && event.end_game_choices.includes(key)) {
       this.stage = "end"
+    }
+
+    if (this.speedUpdated) {
+      this.$forceUpdate()
+      this.speedUpdated = false
     }
   },
 
@@ -235,7 +439,9 @@ export default {
 
   showRandomEvent() {
     const allRandom = this.eventsData.random_events || []
-    const available = allRandom.filter((_, idx) => !this.usedRandomEvents.includes(idx))
+    const available = allRandom.filter(
+      (_, idx) => !this.usedRandomEvents.includes(idx)
+    )
 
     if (available.length === 0) {
       this.currentQuestion = ""
@@ -262,7 +468,6 @@ export default {
 
     this.showOptions = true
     this.showResult = false
-    this.achievementText = ""
   },
 
   handleRandomChoice(key) {
@@ -291,9 +496,13 @@ export default {
     if (event.achievements && event.achievements[key]) {
       const achievement = event.achievements[key]
       const isNew = this.saveAchievement(event.id, key)
-      const achievementStr = Array.isArray(achievement) ? achievement.join("、") : achievement
+      const achievementStr = Array.isArray(achievement)
+        ? achievement.join("、")
+        : achievement
 
-      this.achievementText = `获得成就：${achievementStr}${isNew ? "" : " (已获得)"}`
+      this.achievementText = `获得成就：${achievementStr}${
+        isNew ? "" : " (已获得)"
+      }`
     } else {
       this.achievementText = ""
     }
@@ -304,6 +513,11 @@ export default {
 
     if (event.end_game_choices && event.end_game_choices.includes(key)) {
       this.stage = "end"
+    }
+
+    if (this.speedUpdated) {
+      this.$forceUpdate()
+      this.speedUpdated = false
     }
   },
 
@@ -334,9 +548,7 @@ export default {
   routeBack() {
     this.backToindex()
   },
-  onDestroy() {
-    this.currentEvent = null
-  },
+
   goToAbout() {
     router.push({
       uri: "pages/about",
@@ -350,139 +562,543 @@ export default {
 
 <style>
 .container {
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
   width: 100%;
   height: 100%;
-  min-width: 336px;
-  min-height: 480px;
   background-color: #1a2e22;
-  transition: transform 0.3s ease;
 }
 
-.header {
+.main-shell {
   width: 100%;
-  height: 15%;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
+  height: 100%;
+  flex-direction: column;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
-.main-area {
+
+.pro-header {
+  width: 100%;
+  height: 96px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.circle-header {
+  width: 100%;
+  height: 105px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  align-items: center;
+}
+
+.circle-time {
+  position: absolute;
+  width: 55px;
+  height: 36px;
+  font-size: 28px;
+  font-weight: bold;
+  text-align: center;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  color: #999999;
+  transform-origin: 27.5px 18px;
+}
+
+.circle-time1 { left: 168px; top: 9px; transform: rotate(-14deg); }
+.circle-time2 { left: 189px; top: 6px; transform: rotate(-9deg); }
+.circle-time3 { left: 205.5px; top: 2px; }
+.circle-time4 { left: 222px; top: 6px; transform: rotate(9deg); }
+.circle-time5 { left: 242px; top: 9px; transform: rotate(14deg); }
+
+.circle-page-title-wrap {
+  position: absolute;
+  left: 0px;
+  top: 41px;
+  width: 100%;
+  height: 48px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.circle-back-icon {
+  width: 27px;
+  height: 27px;
+  margin-top: 0px;
+}
+
+.circle-page-title {
+  width: auto;
+  height: 48px;
+  font-size: 36px;
+  font-weight: bold;
+  padding-top: 0px;
+  text-align: center;
+  color: #ffffff;
+}
+
+.pro-header-btn {
+  width: 72px;
+  height: 72px;
+  position: absolute;
+  top: 6px;
+}
+
+.pro-header-btn-left {
+  left: 6px;
+}
+
+.pro-header-btn-right {
+  right: 6px;
+}
+
+.pro-header-center {
+  position: absolute;
+  left: 84px;
+  right: 84px;
+  height: 96px;
+  top: 0;
   flex-direction: column;
   align-items: center;
-  width: 90%;
-  border-radius: 20px;
-  flex-grow: 1;
-  padding: 5% 5% 0 5%;
-  justify-content: flex-start;
-  background-color: rgba(232, 243, 245, 0.1);
-  margin-bottom: 30px;
+  justify-content: center;
 }
 
-/* 问题文本 */
+.pro-header-time {
+  font-size: 24px;
+  line-height: 28px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+.pro-header-title {
+  width: 100%;
+  font-size: 32px;
+  line-height: 36px;
+  color: #ffffff;
+  font-weight: bold;
+  text-align: center;
+}
+
+.main-frame {
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0 12px;
+}
+
+.main-shell-pill {
+  top: 84px;
+  bottom: 84px;
+  height: auto;
+}
+
+.main-frame-pill {
+  padding: 0;
+  height: 100%;
+}
+
+.main-area-pill {
+  height: 100%;
+  margin: 0;
+}
+
+.main-area {
+  width: 90%;
+  background-color: rgba(232, 243, 245, 0.1);
+  flex-direction: column;
+  align-items: center;
+  border-radius: 28px;
+  margin: 8px 0;
+  padding: 14px;
+  justify-content: flex-start;
+}
+
 .question {
-  font-size: 34px;
+  font-size: 38px;
   color: #f8f8ff;
   text-align: center;
-  margin: 30px 0 28px 0;
-  padding: 0 8%;
-  line-height: 42px;
+  margin: 8px 0 16px 0;
+  padding: 0 4%;
+  line-height: 46px;
   font-weight: bold;
-  position: relative;
-  top: 8px;
 }
-/* 按钮容器 */
-.buttons {
-  flex-direction: column;
+
+.content-area {
   width: 100%;
-  max-width: 380px; /* 从310px增加到380px */
-  margin-bottom: 20px;
+  flex-direction: column;
   align-items: center;
   justify-content: flex-start;
+}
+
+.options-list {
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  padding: 2px 0;
 }
 
 .btn {
   width: 100%;
-  min-height: 60px;
-  margin-top: 20px;
-  border-radius: 20px;
+  height: 102px;
+  margin: 8px 0;
+  border-radius: 28px;
   background-color: #69ba83;
-  box-shadow: 0 5px 15px rgba(83, 164, 122, 0.4);
   justify-content: center;
   align-items: center;
-  display: flex;
-  padding: 10px 0;
-  overflow: hidden;
+  padding: 0 12px;
+  box-shadow: 0 4px 14px rgba(83, 164, 122, 0.28);
 }
 
-.btn-text {
-  font-size: 28px;
+.btn-content {
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-marquee {
+  width: 90%;
+  height: 100%;
   color: #fff;
+  font-size: 32px;
   font-weight: bold;
-  letter-spacing: 2px;
-
-  width: 90%; /* 从95%减小到90%，让文字有更多空间 */
   text-align: center;
-  padding: 5px 0;
+  padding: 8px 0;
 }
 
-/* 错误提示 */
-.error-hint {
-  color: #ff7e7e;
-  text-align: center;
-  margin-top: 16px;
-  font-size: 18px;
-  letter-spacing: 1.2px;
-}
-
-/* 结果区域 */
-.result-area {
-  margin-top: 28px;
-  align-items: center;
-  width: 94%;
-  padding: 20px 16px;
-  min-height: 100px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  background-color: rgba(109, 139, 140, 0.2);
+.btn-pill {
+  height: auto;
+  min-height: 72px;
+  padding: 10px 10px;
   border-radius: 20px;
+}
+
+.btn-content-pill {
+  height: auto;
+}
+
+.btn-marquee-pill {
+  height: auto;
+  font-size: 22px;
+  line-height: 30px;
+  padding: 4px 0;
+}
+
+.result-container {
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 14px 0;
+  margin-top: 8px;
+  border-radius: 20px;
+  background-color: rgba(109, 139, 140, 0.2);
 }
 
 .result {
-  font-size: 28px;
+  font-size: 30px;
   color: #b4ffba;
   text-align: center;
-  padding: 0 16px;
-  margin-bottom: 16px;
-  line-height: 36px;
+  padding: 0 10px;
+  margin-bottom: 14px;
+  line-height: 40px;
 }
 
-/* 成就提示 */
+.achievement-box {
+  width: 95%;
+  padding: 14px;
+  margin: 10px 0;
+  background-color: rgba(200, 255, 232, 0.1);
+  border-radius: 18px;
+  justify-content: center;
+  align-items: center;
+}
+
 .achievement {
-  font-size: 26px;
+  font-size: 22px;
   color: #c8ffe8;
   text-align: center;
-  margin: 16px 0;
-  padding: 12px 16px;
-  line-height: 32px;
+  line-height: 30px;
   font-weight: 500;
-  background-color: rgba(200, 255, 232, 0.1);
-  border-radius: 16px;
-  width: 90%;
+}
+
+.continue-btn {
+  width: 100%;
+  height: 88px;
+  margin-top: 16px;
+  border-radius: 26px;
+  background-color: #69ba83;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 0;
+  box-shadow: 0 4px 14px rgba(83, 164, 122, 0.28);
+}
+
+.btn-text {
+  font-size: 30px;
+  color: #fff;
+  font-weight: bold;
+  width: 100%;
+  text-align: center;
+}
+
+.back-btn,
+.detail-btn {
+  position: absolute;
+}
+
+.pill-floating-btn {
+  object-fit: contain;
 }
 
 .back-btn {
-  width: 90px;
-  height: 90px;
-  margin-left: 20px;
+  top: 12px;
 }
 
 .detail-btn {
-  width: 90px;
-  height: 90px;
-  margin-right: 20px;
+  bottom: 12px;
+}
+
+.back-btn,
+.detail-btn {
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+}
+
+.main-frame {
+  padding-top: 90px;
+  padding-bottom: 124px;
+}
+
+.btn {
+  height: 92px;
+  border-radius: 22px;
+  margin: 6px 0;
+  padding: 0 10px;
+}
+
+.btn-marquee {
+  width: 88%;
+  font-size: 24px;
+  padding: 6px 0;
+}
+
+.result {
+  font-size: 24px;
+  line-height: 32px;
+}
+
+.achievement {
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.continue-btn {
+  height: 76px;
+  border-radius: 22px;
+  margin-top: 12px;
+}
+
+.btn-text {
+  font-size: 24px;
+}
+
+.question {
+  font-size: 30px;
+  line-height: 38px;
+  margin: 4px 0 12px 0;
+}
+
+@media (width: 106) {
+  .main-frame {
+    padding-top: 90px;
+    padding-bottom: 128px;
+  }
+
+  .back-btn {
+    top: 12px;
+  }
+
+  .detail-btn {
+    bottom: 12px;
+  }
+
+  .main-area {
+    width: 92%;
+    margin: 0;
+    padding: 12px 10px;
+    border-radius: 24px;
+  }
+
+  .question {
+    font-size: 32px;
+    line-height: 40px;
+    margin: 2px 0 10px 0;
+  }
+
+  .btn {
+    height: 96px;
+    margin: 5px 0;
+    border-radius: 24px;
+    padding: 0 8px;
+  }
+
+  .btn-marquee {
+    width: 88%;
+    font-size: 26px;
+    padding: 7px 0;
+  }
+
+  .result {
+    font-size: 25px;
+    line-height: 34px;
+  }
+
+  .achievement {
+    font-size: 19px;
+    line-height: 25px;
+  }
+
+  .continue-btn {
+    height: 80px;
+  }
+
+  .btn-text {
+    font-size: 26px;
+  }
+}
+
+@media (width: 160) {
+  .main-frame {
+    padding-top: 110px;
+    padding-bottom: 102px;
+  }
+
+  .back-btn {
+    top: 10px;
+    left: 10px;
+  }
+
+  .detail-btn {
+    top: 10px;
+    right: 10px;
+  }
+
+  .back-btn,
+  .detail-btn {
+    width: 84px;
+    height: 84px;
+  }
+
+  .main-area {
+    width: 90%;
+    margin: 8px 0;
+    padding: 14px;
+    border-radius: 28px;
+  }
+
+  .question {
+    font-size: 38px;
+    line-height: 46px;
+    margin: 8px 0 16px 0;
+  }
+
+  .btn {
+    height: 102px;
+    margin: 8px 0;
+    border-radius: 28px;
+    padding: 0 12px;
+  }
+
+  .btn-marquee {
+    width: 90%;
+    font-size: 32px;
+    padding: 8px 0;
+  }
+
+  .result {
+    font-size: 30px;
+    line-height: 40px;
+  }
+
+  .achievement {
+    font-size: 22px;
+    line-height: 30px;
+  }
+
+  .continue-btn {
+    height: 88px;
+    border-radius: 26px;
+    margin-top: 16px;
+  }
+
+  .btn-text {
+    font-size: 30px;
+  }
+}
+
+@media (width: 216) {
+  .pro-header-btn {
+    top: 8px;
+  }
+
+  .pro-header-btn-left {
+    left: 40px;
+  }
+
+  .pro-header-btn-right {
+    right: 40px;
+  }
+}
+
+@media (width: 233) {
+  .main-frame {
+    padding-top: 108px;
+    padding-bottom: 96px;
+  }
+
+  .main-area {
+    width: 80%;
+    margin: 0;
+    padding: 12px 16px;
+    border-radius: 28px;
+  }
+
+  .question {
+    font-size: 34px;
+    line-height: 42px;
+    margin: 4px 0 12px 0;
+  }
+
+  .btn {
+    height: 84px;
+    margin: 5px 0;
+    border-radius: 24px;
+    padding: 0 10px;
+  }
+
+  .btn-marquee {
+    width: 92%;
+    font-size: 30px;
+    padding: 4px 0;
+  }
+
+  .continue-btn {
+    height: 78px;
+    border-radius: 24px;
+    margin-top: 12px;
+  }
+
+  .btn-text {
+    font-size: 28px;
+  }
 }
 </style>

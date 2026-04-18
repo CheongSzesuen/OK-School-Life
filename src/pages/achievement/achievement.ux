@@ -1,37 +1,92 @@
 <template>
-    <div class="container">
-        <!-- 头部 -->
-        <div class="header">
-            <image class="back-btn" src="../../common/assets/backButton/backButton.png" onclick="routeBack"></image>
-            <text class="title">成就</text>
-            <image class="clear-btn" src="../../common/assets/deleteButton/deleteButton.png" onclick="clearAchievements">
-            </image>
+  <stack class="container">
+    <div class="main-shell">
+      <div class="main-area {{ isBand9Pro ? 'main-area-band9pro' : '' }}" style="{{ pillMainAreaStyle }}">
+        <div class="header" if="{{ !isPillScreen && !isBand9Pro && !isCircleScreen }}">
+          <image
+            class="back-btn"
+            src="{{ backButtonSrc }}"
+            onclick="backToindex"
+          ></image>
+          <text class="title">成就</text>
+          <image
+            class="delete-btn"
+            src="{{ deleteButtonSrc }}"
+            onclick="clearAchievements"
+          ></image>
         </div>
 
-        <!-- 主内容区 -->
-        <div class="main-area">
-            <!-- 加载状态 -->
-            <div class="loading-state" if="{{isLoading}}">
-                <text class="loading-text">加载中...</text>
-            </div>
-
-            <!-- 成就列表 -->
-            <div class="achievement-content" if="{{!isLoading}}">
-                <div class="achievement-list">
-                    <div class="achievement-item" for="{{achievements}}">
-                        <text class="achievement-text">{{ $item }}</text>
-                    </div>
-                </div>
-
-                <div class="empty-state" if="{{achievements.length === 0}}">
-                    <text class="empty-text">暂无成就</text>
-                </div>
-            </div>
+        <div class="loading-state" if="{{ isLoading }}">
+          <text class="loading-text">加载中...</text>
         </div>
 
-        <!-- 新增空白footer -->
-        <div class="footer"></div>
+        <div class="achievement-content" if="{{ !isLoading }}" style="{{ pillContentStyle }}">
+          <scroll class="achievement-scroll" scroll-y="true" bounces="true">
+            <div class="achievement-list">
+              <div
+                for="{{ achievements }}"
+                class="achievement-item {{ isPillScreen ? 'achievement-item-pill' : '' }}"
+                style="{{ pillItemStyle }}"
+              >
+                <text class="achievement-text {{ isPillScreen ? 'achievement-text-pill' : '' }}" style="{{ pillTextStyle }}">{{ $item }}</text>
+              </div>
+              <div
+                if="{{ achievements.length === 0 }}"
+                class="empty-state"
+              >
+                <text class="empty-text {{ isPillScreen ? 'empty-text-pill' : '' }}" style="{{ pillEmptyTextStyle }}">暂无成就</text>
+              </div>
+            </div>
+          </scroll>
+        </div>
+      </div>
     </div>
+
+    <image
+      if="{{ isPillScreen }}"
+      class="pill-floating-btn"
+      style="{{ pillTopButtonStyle }}"
+      src="{{ backButtonSrc }}"
+      onclick="backToindex"
+    ></image>
+
+    <image
+      if="{{ isPillScreen }}"
+      class="pill-floating-btn"
+      style="{{ pillBottomButtonStyle }}"
+      src="{{ deleteButtonSrc }}"
+      onclick="clearAchievements"
+    ></image>
+
+    <div class="pro-header" if="{{ isBand9Pro }}">
+      <div class="pro-header-center">
+        <text class="pro-header-time">{{ currentTime }}</text>
+        <text class="pro-header-title">成就</text>
+      </div>
+      <image
+        class="pro-header-btn pro-header-btn-left"
+        src="/common/btn/rect/Back_T.png"
+        onclick="backToindex"
+      ></image>
+      <image
+        class="pro-header-btn pro-header-btn-right"
+        src="/common/btn/rect/Delete_W.png"
+        onclick="clearAchievements"
+      ></image>
+    </div>
+
+    <div class="circle-header" if="{{ isCircleScreen }}">
+      <text class="circle-time circle-time1">{{ timeDigits[0] }}</text>
+      <text class="circle-time circle-time2">{{ timeDigits[1] }}</text>
+      <text class="circle-time circle-time3">:</text>
+      <text class="circle-time circle-time4">{{ timeDigits[2] }}</text>
+      <text class="circle-time circle-time5">{{ timeDigits[3] }}</text>
+      <div class="circle-page-title-wrap" onclick="backToindex">
+        <image class="circle-back-icon" src="/common/assets/btn/back.png"></image>
+        <text class="circle-page-title">成就</text>
+      </div>
+    </div>
+  </stack>
 </template>
 
 <script>
@@ -39,24 +94,146 @@ import router from "@system.router"
 import storage from "@system.storage"
 import prompt from "@system.prompt"
 import eventsData from "../../common/data/events.json"
+import {
+  getCachedDeviceProfile,
+  loadDeviceProfile
+} from "../../common/utils/device"
 
 export default {
   private: {
     achievements: [],
     isLoading: true,
-    achievementMap: {}
+    achievementMap: {},
+    version: "",
+    name: "",
+    screenWidth: 160,
+    backButtonSrc: "../../common/assets/backButton/backButton.png",
+    deleteButtonSrc: "../../common/assets/deleteButton/deleteButton.png",
+    pillTopButtonStyle: "",
+    pillBottomButtonStyle: "",
+    pillMainAreaStyle: "",
+    pillContentStyle: "",
+    pillItemStyle: "",
+    pillTextStyle: "",
+    pillEmptyTextStyle: "",
+    isPillScreen: false,
+    isBand9Pro: false,
+    isCircleScreen: false,
+    screenShape: "rect",
+    currentTime: "",
+    timeDigits: ["0", "0", "0", "0"],
+    clockTimer: null
   },
 
   onInit() {
-    console.log("成就页面初始化开始")
+    if (this.$page && this.$page.param) {
+      this.version = this.$page.param.version || ""
+      this.name = this.$page.param.name || ""
+    }
+
+    const screenWidth = global.screenSize && global.screenSize.width
+    if (screenWidth) {
+      this.screenWidth = screenWidth
+      this.screenShape = global.screenShape || "rect"
+    } else {
+      const cached = getCachedDeviceProfile()
+      if (cached) {
+        this.screenWidth = cached.screenWidth
+        this.screenShape = cached.screenShape
+      } else {
+        loadDeviceProfile((profile) => {
+          this.screenWidth = profile.screenWidth
+          this.screenShape = profile.screenShape
+          this.updateFloatingButtons()
+        })
+      }
+    }
+
+    this.updateFloatingButtons()
+    this.startClock()
     this.initAchievementMap()
     this.loadAchievements()
+  },
+
+  onDestroy() {
+    if (this.clockTimer) {
+      clearInterval(this.clockTimer)
+      this.clockTimer = null
+    }
+  },
+
+  startClock() {
+    this.updateCurrentTime()
+    if (!this.clockTimer) {
+      this.clockTimer = setInterval(() => {
+        this.updateCurrentTime()
+      }, 30000)
+    }
+  },
+
+  updateCurrentTime() {
+    const now = new Date()
+    const hours = `${now.getHours()}`.padStart(2, "0")
+    const minutes = `${now.getMinutes()}`.padStart(2, "0")
+    this.currentTime = `${hours}:${minutes}`
+    this.timeDigits = [hours[0], hours[1], minutes[0], minutes[1]]
+  },
+
+  updateFloatingButtons() {
+    this.isPillScreen = this.screenWidth === 192 || this.screenWidth === 212
+    this.isCircleScreen = this.screenShape === "circle"
+    this.isBand9Pro =
+      this.screenWidth === 336 ||
+      this.screenWidth === 160 ||
+      this.screenWidth === 432 ||
+      this.screenWidth === 216
+
+    if (this.isPillScreen) {
+      const buttonWidth = 102
+      const buttonHeight = 72
+      const left = Math.max(0, Math.floor((this.screenWidth - buttonWidth) / 2))
+      const scale = this.screenWidth / 336
+      const sidePadding = Math.max(10, Math.round(18 * scale))
+      const cardPadding = Math.max(10, Math.round(16 * scale))
+      const itemPaddingY = Math.max(8, Math.round(12 * scale))
+      const itemPaddingX = Math.max(10, Math.round(16 * scale))
+      const itemRadius = Math.max(14, Math.round(26 * scale))
+      const itemMargin = Math.max(4, Math.round(8 * scale))
+      const textSize = Math.max(18, Math.round(28 * scale))
+      const emptyTextSize = Math.max(18, Math.round(26 * scale))
+      this.pillMainAreaStyle = `padding: 88px ${sidePadding}px 88px; height: 100%;`
+      this.pillContentStyle = `width: 100%; height: 100%; border-radius: ${Math.max(16, Math.round(28 * scale))}px; padding: ${cardPadding}px;`
+      this.pillItemStyle = `margin: ${itemMargin}px 0; border-radius: ${itemRadius}px; padding: ${itemPaddingY}px ${itemPaddingX}px;`
+      this.pillTextStyle = `font-size: ${textSize}px;`
+      this.pillEmptyTextStyle = `font-size: ${emptyTextSize}px;`
+      this.pillTopButtonStyle = `position: absolute; top: 12px; left: ${left}px; width: ${buttonWidth}px; height: ${buttonHeight}px;`
+      this.pillBottomButtonStyle = `position: absolute; bottom: 12px; left: ${left}px; width: ${buttonWidth}px; height: ${buttonHeight}px;`
+      this.backButtonSrc = "/common/btn/Back_T.png"
+      this.deleteButtonSrc = "/common/btn/Delete_W.png"
+      return
+    }
+
+    this.pillTopButtonStyle = ""
+    this.pillBottomButtonStyle = ""
+    this.pillMainAreaStyle = ""
+    this.pillContentStyle = ""
+    this.pillItemStyle = ""
+    this.pillTextStyle = ""
+    this.pillEmptyTextStyle = ""
+
+    if (this.isBand9Pro) {
+      this.backButtonSrc = "/common/btn/rect/Back_T.png"
+      this.deleteButtonSrc = "/common/btn/rect/Delete_W.png"
+      return
+    }
+
+    this.backButtonSrc = "../../common/assets/backButton/backButton.png"
+    this.deleteButtonSrc = "../../common/assets/deleteButton/deleteButton.png"
   },
 
   initAchievementMap() {
     const map = {}
 
-    // 处理固定事件
     for (const groupKey in eventsData.events) {
       const group = eventsData.events[groupKey]
       group.forEach((event) => {
@@ -64,24 +241,26 @@ export default {
           for (const choiceKey in event.achievements) {
             const key = `${event.id}_${choiceKey}`
             const achievement = event.achievements[choiceKey]
-            map[key] = Array.isArray(achievement) ? achievement.join("、") : achievement
+            map[key] = Array.isArray(achievement)
+              ? achievement.join("、")
+              : achievement
           }
         }
       })
     }
 
-    // 处理随机事件
     eventsData.random_events.forEach((event) => {
       if (event.achievements) {
         for (const choiceKey in event.achievements) {
           const key = `${event.id}_${choiceKey}`
           const achievement = event.achievements[choiceKey]
-          map[key] = Array.isArray(achievement) ? achievement.join("、") : achievement
+          map[key] = Array.isArray(achievement)
+            ? achievement.join("、")
+            : achievement
         }
       }
     })
 
-    console.log("成就映射表初始化完成", map)
     this.achievementMap = map
   },
 
@@ -91,26 +270,23 @@ export default {
     storage.get({
       key: "achievements",
       success: (data) => {
-        console.log("从存储加载的原始成就数据:", data)
-
         if (data) {
           try {
             const achievedKeys = JSON.parse(data)
             this.processAchievements(achievedKeys)
           } catch (e) {
             console.error("成就数据解析失败", e)
-            prompt.showToast({message: "成就数据解析失败"})
+            prompt.showToast({ message: "成就数据解析失败" })
             this.achievements = []
           }
         } else {
           this.achievements = []
         }
-
         this.isLoading = false
       },
       fail: (err, code) => {
         console.error(`成就加载失败，错误码：${code}`)
-        prompt.showToast({message: "加载成就失败"})
+        prompt.showToast({ message: "加载成就失败" })
         this.achievements = []
         this.isLoading = false
       }
@@ -118,38 +294,25 @@ export default {
   },
 
   processAchievements(achievedKeys) {
-    console.log("原始成就keys:", achievedKeys)
-    console.log("成就映射表:", this.achievementMap)
-
     const processed = []
     achievedKeys.forEach((key) => {
-      console.log(`处理key: ${key}`)
       let name = this.achievementMap[key]
-      console.log(`直接匹配结果: ${name}`)
 
       if (!name && key.includes("_")) {
         const parts = key.split("_")
         if (parts.length >= 3) {
           const baseKey = `${parts[0]}_${parts[1]}`
-          console.log(`尝试基础key: ${baseKey}`)
           name = this.achievementMap[baseKey]
-          console.log(`基础匹配结果: ${name}`)
         }
       }
 
       processed.push(name || key)
     })
 
-    console.log("最终成就列表:", processed)
     this.achievements = processed
   },
 
-  routeBack() {
-    router.back()
-  },
-
   clearAchievements() {
-    // 直接清除成就数据，不再显示确认对话框
     storage.set({
       key: "achievements",
       value: JSON.stringify([]),
@@ -162,8 +325,6 @@ export default {
           borderRadius: 12,
           duration: 2000
         })
-        // 重新加载空列表
-        this.loadAchievements()
       },
       fail: (err, code) => {
         console.error(`清除成就失败，错误码：${code}`)
@@ -176,60 +337,194 @@ export default {
         })
       }
     })
+  },
+
+  backToindex() {
+    router.replace({
+      uri: "pages/index",
+      params: {
+        version: this.version
+      }
+    })
   }
 }
 </script>
 
 <style>
 .container {
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
   width: 100%;
   height: 100%;
-  min-width: 336px;
-  min-height: 480px;
   background-color: #1a2e22;
-  padding: 0;
+}
+
+.main-shell {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
 }
 
 .header {
   width: 100%;
-  height: 120px;
+  height: 96px;
   flex-direction: row;
-  justify-content: space-between;
   align-items: center;
-  padding: 0 25px;
-}
-
-.back-btn {
-  width: 100px;
-  height: 100px;
-  margin-left: 10px;
+  justify-content: space-between;
+  padding: 0 16px;
 }
 
 .title {
-  font-size: 36px;
-  color: #bfe1d8;
+  font-size: 28px;
+  color: #f8f8ff;
   font-weight: bold;
 }
 
-.clear-btn {
-  width: 100px;
-  height: 100px;
-  margin-right: 10px;
+.back-btn,
+.delete-btn {
+  width: 84px;
+  height: 84px;
 }
 
 .main-area {
+  width: 100%;
   flex-direction: column;
   align-items: center;
-  width: 90%;
+  padding: 12px 18px;
+  height: 100%;
+}
+
+.main-area-band9pro {
+  padding-top: 110px;
+}
+
+.pro-header {
+  width: 100%;
+  height: 96px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.circle-header {
+  width: 100%;
+  height: 105px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  align-items: center;
+}
+
+.circle-time {
+  position: absolute;
+  width: 55px;
+  height: 36px;
+  font-size: 28px;
+  font-weight: bold;
+  text-align: center;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  color: #999999;
+  transform-origin: 27.5px 18px;
+}
+
+.circle-time1 { left: 168px; top: 9px; transform: rotate(-14deg); }
+.circle-time2 { left: 189px; top: 6px; transform: rotate(-9deg); }
+.circle-time3 { left: 205.5px; top: 2px; }
+.circle-time4 { left: 222px; top: 6px; transform: rotate(9deg); }
+.circle-time5 { left: 242px; top: 9px; transform: rotate(14deg); }
+
+.circle-page-title-wrap {
+  position: absolute;
+  left: 0px;
+  top: 41px;
+  width: 100%;
+  height: 48px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.circle-back-icon {
+  width: 27px;
+  height: 27px;
+  margin-top: 0px;
+}
+
+.circle-page-title {
+  width: auto;
+  height: 48px;
+  font-size: 36px;
+  font-weight: bold;
+  padding-top: 0px;
+  text-align: center;
+  color: #ffffff;
+}
+
+.pro-header-btn {
+  width: 72px;
+  height: 72px;
+  position: absolute;
+  top: 6px;
+}
+
+.pro-header-btn-left {
+  left: 6px;
+}
+
+.pro-header-btn-right {
+  right: 6px;
+}
+
+.pro-header-center {
+  position: absolute;
+  left: 84px;
+  right: 84px;
+  height: 96px;
+  top: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.pro-header-time {
+  font-size: 24px;
+  line-height: 28px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+.pro-header-title {
+  width: 100%;
+  font-size: 32px;
+  line-height: 36px;
+  color: #ffffff;
+  font-weight: bold;
+  text-align: center;
+}
+
+.achievement-content {
+  width: 95%;
+  height: 100%;
   flex-grow: 1;
-  border-radius: 24px;
-  padding: 0 20px; /* 增加父容器内边距 */
-  justify-content: flex-start;
   background-color: rgba(232, 243, 245, 0.1);
-  backdrop-filter: blur(5px);
+  border-radius: 28px;
+  margin: 8px 0 0;
+  padding: 16px;
+  justify-content: flex-start;
+}
+
+.achievement-scroll {
+  width: 100%;
+  height: 100%;
 }
 
 .loading-state {
@@ -237,68 +532,94 @@ export default {
   height: 100%;
   justify-content: center;
   align-items: center;
-  display: flex;
 }
 
 .loading-text {
-  font-size: 28px;
-  color: #acecb0;
-}
-
-.achievement-content {
-  width: 100%;
-  flex-direction: column;
-  display: flex;
+  font-size: 24px;
+  color: #b4ffba;
 }
 
 .achievement-list {
   width: 100%;
   flex-direction: column;
-  display: flex;
-  padding: 5px 0; /* 列表上下添加内边距 */
+  padding: 4px 0;
 }
 
 .achievement-item {
   width: 100%;
-  min-height: 70px;
-  margin: 8px 0; /* 调整列表项上下间距 */
-  border-radius: 24px;
+  min-height: 92px;
+  margin: 8px 0;
+  border-radius: 26px;
   background-color: #69ba83;
   justify-content: center;
   align-items: center;
-  display: flex;
-  padding: 14px 0;
-  box-shadow: 0 4px 12px rgba(105, 186, 131, 0.3);
-  border: 1px solid #69ba83;
+  padding: 12px 16px;
+  box-shadow: 0 4px 14px rgba(83, 164, 122, 0.28);
 }
 
 .achievement-text {
   font-size: 28px;
-  color: #ffffff;
-  font-weight: 500;
+  color: #fff;
+  font-weight: bold;
   text-align: center;
-  padding: 0 18px;
-  line-height: 36px;
-  width: 90%;
+  word-break: break-word;
+  width: 100%;
 }
 
 .empty-state {
   width: 100%;
-  height: 200px;
+  min-height: 120px;
   justify-content: center;
   align-items: center;
-  display: flex;
 }
 
 .empty-text {
-  font-size: 28px;
-  color: #b5dbc7;
-  opacity: 0.8;
+  font-size: 26px;
+  color: #c8ffe8;
+  text-align: center;
+  font-weight: 500;
 }
 
-.footer {
-  width: 100%;
-  height: 20px;
-  background-color: transparent;
+.pill-floating-btn {
+  object-fit: contain;
+}
+
+.achievement-item-pill {
+  min-height: 74px;
+  margin: 6px 0;
+  border-radius: 20px;
+  padding: 10px 12px;
+}
+
+.achievement-text-pill {
+  font-size: 22px;
+}
+
+.empty-text-pill {
+  font-size: 22px;
+}
+
+@media (width: 216) {
+  .pro-header-btn {
+    top: 8px;
+  }
+
+  .pro-header-btn-left {
+    left: 40px;
+  }
+
+  .pro-header-btn-right {
+    right: 40px;
+  }
+}
+
+@media (width: 233) {
+  .achievement-content {
+    width: 80%;
+    padding-top: 24px;
+  }
+  .main-area{
+    padding-top:85px;
+  }
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
   <stack class="container">
-    <scroll class="main-shell" scroll-y="true" bounces="true">
+    <div class="main-shell">
       <div class="main-area {{ isPillScreen ? 'main-area-pill' : '' }} {{ isBand9Pro ? 'main-area-band9pro' : '' }}">
         <div class="header" if="{{ !isPillScreen && !isBand9Pro && !isCircleScreen }}">
           <image
@@ -8,40 +8,48 @@
             src="{{ backButtonSrc }}"
             onclick="backToPrevious"
           ></image>
-          <text class="header-title">关于</text>
-          <image
-            class="info-btn"
-            src="{{ infoButtonSrc }}"
-            onclick="goToDonate"
-          ></image>
         </div>
 
-        <div class="card {{ isPillScreen ? 'card-pill' : '' }}">
-          <text class="game-name {{ isPillScreen ? 'game-name-pill' : '' }}">OK School Life</text>
-          <text class="game-version {{ isPillScreen ? 'game-version-pill' : '' }}">{{ version }}</text>
-          <image class="game-icon {{ isPillScreen ? 'game-icon-pill' : '' }}" src="../../common/assets/icon/icon-v4.png"></image>
-        </div>
-
-        <div class="developer-section {{ isPillScreen ? 'developer-section-pill' : '' }}">
-          <text class="section-title {{ isPillScreen ? 'section-title-pill' : '' }}">开发者</text>
-
-          <div class="developer-list">
-            <div class="developer-item {{ isPillScreen ? 'developer-item-pill' : '' }}">
-              <image class="developer-avatar {{ isPillScreen ? 'developer-avatar-pill' : '' }}" src="../../common/assets/avatar/WaiJade.png"></image>
-              <text class="developer-name {{ isPillScreen ? 'developer-name-pill' : '' }}">WaiJade</text>
-            </div>
-            <div class="developer-item {{ isPillScreen ? 'developer-item-pill' : '' }}">
-              <image class="developer-avatar {{ isPillScreen ? 'developer-avatar-pill' : '' }}" src="../../common/assets/avatar/StillAlive.png"></image>
-              <text class="developer-name {{ isPillScreen ? 'developer-name-pill' : '' }}">StillAlive</text>
-            </div>
+        <div class="preview-section {{ isPillScreen ? 'preview-section-pill' : '' }}">
+          <text if="{{ !isBand9Pro }}" class="section-title {{ isPillScreen ? 'section-title-pill' : '' }}">跑马灯速度</text>
+          <div class="preview-item {{ isPillScreen ? 'preview-item-pill' : '' }}">
+            <marquee class="{{ isPillScreen ? 'preview-marquee-pill' : '' }}" scrollamount="{{ speed }}" loop="-1" direction="left">
+              {{ currentQuote }}
+            </marquee>
           </div>
         </div>
 
-        <div class="settings-btn {{ isPillScreen ? 'settings-btn-pill' : '' }}" onclick="goToSettings">
-          <text class="settings-text {{ isPillScreen ? 'settings-text-pill' : '' }}">修改跑马灯速度</text>
+        <div class="speed-control">
+          <text class="section-title {{ isPillScreen ? 'section-title-pill' : '' }}">调整速度</text>
+          <div class="control-buttons-band9pro" if="{{ isBand9Pro }}">
+            <image
+              class="control-btn control-btn-band9pro"
+              src="../../common/assets/minus-plus/plusButton.png"
+              onclick="increaseSpeed"
+            ></image>
+            <text class="speed-value speed-value-band9pro">{{ speed }}</text>
+            <image
+              class="control-btn control-btn-band9pro"
+              src="../../common/assets/minus-plus/minusButton.png"
+              onclick="decreaseSpeed"
+            ></image>
+          </div>
+          <div class="control-buttons" if="{{ !isBand9Pro }}">
+            <image
+              class="control-btn {{ isPillScreen ? 'control-btn-pill' : '' }}"
+              src="../../common/assets/minus-plus/plusButton.png"
+              onclick="increaseSpeed"
+            ></image>
+            <text class="speed-value {{ isPillScreen ? 'speed-value-pill' : '' }}">{{ speed }}</text>
+            <image
+              class="control-btn {{ isPillScreen ? 'control-btn-pill' : '' }}"
+              src="../../common/assets/minus-plus/minusButton.png"
+              onclick="decreaseSpeed"
+            ></image>
+          </div>
         </div>
       </div>
-    </scroll>
+    </div>
 
     <image
       if="{{ isPillScreen }}"
@@ -51,18 +59,10 @@
       onclick="backToPrevious"
     ></image>
 
-    <image
-      if="{{ isPillScreen }}"
-      class="pill-floating-btn"
-      style="{{ pillBottomButtonStyle }}"
-      src="{{ infoButtonSrc }}"
-      onclick="goToDonate"
-    ></image>
-
     <div class="pro-header" if="{{ isBand9Pro }}">
       <div class="pro-header-center">
         <text class="pro-header-time">{{ currentTime }}</text>
-        <text class="pro-header-title">关于</text>
+        <text class="pro-header-title">跑马灯速度</text>
       </div>
       <image
         class="pro-header-btn pro-header-btn-left"
@@ -72,7 +72,7 @@
       <image
         class="pro-header-btn pro-header-btn-right"
         src="/common/btn/rect/More_B.png"
-        onclick="goToDonate"
+        onclick="showRandomQuote"
       ></image>
     </div>
 
@@ -84,7 +84,7 @@
       <text class="circle-time circle-time5">{{ timeDigits[3] }}</text>
       <div class="circle-page-title-wrap" onclick="backToPrevious">
         <image class="circle-back-icon" src="/common/assets/btn/back.png"></image>
-        <text class="circle-page-title">关于</text>
+        <text class="circle-page-title">跑马灯速度</text>
       </div>
     </div>
   </stack>
@@ -92,28 +92,34 @@
 
 <script>
 import router from "@system.router"
+import storage from "@system.storage"
+import philosophyQuotes from "../../common/data/sentences.json"
 import {
   getCachedDeviceProfile,
   loadDeviceProfile
 } from "../../common/utils/device"
 
-const manifest = require("../../manifest.json")
-
 export default {
   private: {
-    version: manifest.versionName || "",
+    speed: 50,
+    quotes: [],
+    currentQuote: "",
     screenWidth: 160,
     backButtonSrc: "../../common/assets/backButton/backButton.png",
-    infoButtonSrc: "../../common/assets/infoButton/infoButton.png",
+    moreButtonSrc: "/common/btn/rect/More_B.png",
     pillTopButtonStyle: "",
-    pillBottomButtonStyle: "",
     isPillScreen: false,
     isBand9Pro: false,
     isCircleScreen: false,
     screenShape: "rect",
     currentTime: "",
     timeDigits: ["0", "0", "0", "0"],
-    clockTimer: null
+    clockTimer: null,
+    defaultQuotes: [
+      "哲学家们只是用不同的方式解释世界，而问题在于改变世界。",
+      "全世界的无产者，联合起来！",
+      "为人民服务！人民万岁！"
+    ]
   },
 
   onInit() {
@@ -130,13 +136,15 @@ export default {
         loadDeviceProfile((profile) => {
           this.screenWidth = profile.screenWidth
           this.screenShape = profile.screenShape
-          this.updateFloatingButtons()
+          this.updateFloatingButton()
         })
       }
     }
-
-    this.updateFloatingButtons()
+    this.updateFloatingButton()
     this.startClock()
+    this.loadQuotesData()
+    this.loadSpeedFromStorage()
+    this.showRandomQuote()
   },
 
   onDestroy() {
@@ -163,7 +171,7 @@ export default {
     this.timeDigits = [hours[0], hours[1], minutes[0], minutes[1]]
   },
 
-  updateFloatingButtons() {
+  updateFloatingButton() {
     this.isPillScreen = this.screenWidth === 192 || this.screenWidth === 212
     this.isCircleScreen = this.screenShape === "circle"
     this.isBand9Pro =
@@ -177,41 +185,98 @@ export default {
       const buttonHeight = 72
       const left = Math.max(0, Math.floor((this.screenWidth - buttonWidth) / 2))
       this.pillTopButtonStyle = `position: absolute; top: 12px; left: ${left}px; width: ${buttonWidth}px; height: ${buttonHeight}px;`
-      this.pillBottomButtonStyle = `position: absolute; bottom: 12px; left: ${left}px; width: ${buttonWidth}px; height: ${buttonHeight}px;`
       this.backButtonSrc = "/common/btn/Back_T.png"
-      this.infoButtonSrc = "/common/btn/More_T.png"
       return
     }
 
     this.pillTopButtonStyle = ""
-    this.pillBottomButtonStyle = ""
 
     if (this.isBand9Pro) {
       this.backButtonSrc = "/common/btn/rect/Back_T.png"
-      this.infoButtonSrc = "/common/btn/rect/More_B.png"
+      this.moreButtonSrc = "/common/btn/rect/More_B.png"
       return
     }
 
     this.backButtonSrc = "../../common/assets/backButton/backButton.png"
-    this.infoButtonSrc = "../../common/assets/infoButton/infoButton.png"
+    this.moreButtonSrc = "/common/btn/rect/More_B.png"
   },
 
   backToPrevious() {
     router.back()
   },
 
-  goToDonate() {
-    router.push({
-      uri: "pages/donation",
-      params: { version: this.version }
+  loadQuotesData() {
+    try {
+      const rawData =
+        philosophyQuotes.philosophy_quotes || philosophyQuotes.sentences || []
+      this.quotes = Array.isArray(rawData)
+        ? rawData.filter((item) => typeof item === "string")
+        : this.defaultQuotes
+    } catch (e) {
+      console.error("加载语录数据失败，使用默认语录:", e)
+      this.quotes = this.defaultQuotes
+    }
+  },
+
+  loadSpeedFromStorage() {
+    storage.get({
+      key: "marquee_speed",
+      success: (data) => {
+        if (data !== undefined && data !== null && data !== "") {
+          const savedSpeed = parseInt(data)
+          if (!isNaN(savedSpeed) && savedSpeed >= 10 && savedSpeed <= 250) {
+            this.speed = savedSpeed
+          }
+        }
+      },
+      fail: (err, code) => {
+        console.error("读取存储失败:", code, err)
+      }
     })
   },
 
-  goToSettings() {
-    router.push({
-      uri: "pages/setting",
-      params: { version: this.version }
+  saveCurrentSpeed() {
+    storage.set({
+      key: "marquee_speed",
+      value: this.speed.toString(),
+      success: () => {},
+      fail: (err, code) => {
+        console.error("保存速度失败:", code, err)
+      }
     })
+  },
+
+  increaseSpeed() {
+    if (this.speed < 250) {
+      this.speed += 10
+      this.saveCurrentSpeed()
+    }
+  },
+
+  decreaseSpeed() {
+    if (this.speed > 10) {
+      this.speed -= 10
+      this.saveCurrentSpeed()
+    }
+  },
+
+  getRandomQuote() {
+    try {
+      if (!this.quotes || this.quotes.length === 0) {
+        return this.defaultQuotes[
+          Math.floor(Math.random() * this.defaultQuotes.length)
+        ]
+      }
+      return this.quotes[Math.floor(Math.random() * this.quotes.length)]
+    } catch (e) {
+      console.error("获取随机语录失败:", e)
+      return this.defaultQuotes[0]
+    }
+  },
+
+  showRandomQuote() {
+    this.currentQuote = this.getRandomQuote()
+    this.$forceUpdate()
   }
 }
 </script>
@@ -234,29 +299,41 @@ export default {
   flex-direction: column;
 }
 
-.main-area {
-  width: 100%;
-  flex-direction: column;
-  align-items: center;
-  padding: 90px 18px;
-}
-
-.main-area-pill {
-  padding: 90px 12px;
-}
-
 .main-area-band9pro {
-  padding: 110px 18px 28px;
+  padding-top: 110px;
+}
+
+.control-buttons-band9pro {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.control-btn-band9pro {
+  margin: 0 10px;
+}
+
+.speed-value-band9pro {
+  margin: 0 12px;
+}
+
+.header {
+  width: 100%;
+  height: 96px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
 }
 
 .pro-header {
   width: 100%;
   height: 96px;
-  position: relative;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  position: absolute;
   align-items: center;
   justify-content: center;
 }
@@ -360,123 +437,82 @@ export default {
   text-align: center;
 }
 
-.header {
-  width: 100%;
-  height: 96px;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 0 8px;
-}
-
-.back-btn,
-.info-btn {
+.back-btn {
   width: 84px;
   height: 84px;
 }
 
-.header-title {
-  font-size: 28px;
-  color: #f8f8ff;
-  font-weight: bold;
-}
-
-.card {
+.main-area {
   width: 100%;
-  min-height: 176px;
-  border-radius: 28px;
-  border: 2px solid #a9d6c2;
-  padding: 18px;
-  position: relative;
-}
-
-.game-name {
-  width: 62%;
-  font-size: 34px;
-  color: #ffffff;
-  font-weight: bold;
-  line-height: 42px;
-  position: absolute;
-  top: 18px;
-  left: 18px;
-}
-
-.game-version {
-  font-size: 20px;
-  color: rgba(255, 255, 255, 0.8);
-  position: absolute;
-  left: 18px;
-  bottom: 18px;
-}
-
-.game-icon {
-  width: 118px;
-  height: 118px;
-  border-radius: 24px;
-  position: absolute;
-  right: 18px;
-  bottom: 18px;
-}
-
-.developer-section {
-  width: 100%;
-  margin-top: 18px;
-  padding: 0 4px;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 88px 18px 14px;
+}
+
+.main-area-pill {
+  padding: 88px 10px 14px;
 }
 
 .section-title {
   font-size: 28px;
-  color: rgba(255, 255, 255, 0.62);
-  text-align: left;
-  font-weight: bold;
-  width: 100%;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 14px;
+  text-align: center;
 }
 
-.developer-list {
+.preview-section {
   width: 100%;
   flex-direction: column;
-  align-items: flex-start;
-}
-
-.developer-item {
-  width: 100%;
-  min-height: 30px;
-  padding-top: 8px;
-  flex-direction: row;
   align-items: center;
-  justify-content: flex-start;
+  margin-bottom: 24px;
 }
 
-.developer-avatar {
-  width: 42px;
-  height: 42px;
-  border-radius: 21px;
-  margin-right: 14px;
-}
-
-.developer-name {
-  font-size: 26px;
-  color: #ffffff;
-  font-weight: bold;
-}
-
-.settings-btn {
+.preview-item {
   width: 100%;
-  min-height: 50px;
-  margin-top: 18px;
-  border-radius: 24px;
+  min-height: 102px;
+  margin: 8px 0;
+  border-radius: 26px;
   background-color: #69ba83;
   justify-content: center;
   align-items: center;
-  padding: 12px 18px;
+  padding: 14px 16px;
+  box-shadow: 0 4px 14px rgba(83, 164, 122, 0.28);
 }
 
-.settings-text {
+marquee {
   font-size: 28px;
+  color: #fff;
+  font-weight: bold;
+  width: 100%;
+}
+
+.speed-control {
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+}
+
+.control-buttons {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0px;
+}
+
+.control-btn {
+  width: 104px;
+  height: 104px;
+  margin: 5px 0;
+}
+
+.speed-value {
+  font-size: 42px;
   color: #ffffff;
   font-weight: bold;
+  margin: 8px 0;
+  min-width: 100px;
   text-align: center;
 }
 
@@ -484,86 +520,45 @@ export default {
   object-fit: contain;
 }
 
-.card-pill {
-  min-height: 118px;
-  border-radius: 22px;
-  padding: 80px 14px;
-}
-
-.game-name-pill {
-  width: 165px;
-  font-size: 26px;
-  line-height: 30px;
-  top: 14px;
-  left: 14px;
-}
-
-.game-version-pill {
-  font-size: 14px;
-  line-height: 18px;
-  left: 14px;
-  bottom: 14px;
-}
-
-.game-icon-pill {
-  width: 72px;
-  height: 72px;
-  border-radius: 16px;
-  right: 14px;
-  bottom: 14px;
-}
-
-.developer-section-pill {
-  margin-top: 20px;
+.preview-section-pill {
+  width: 96%;
+  margin-bottom: 0px;
 }
 
 .section-title-pill {
   font-size: 22px;
-  text-align: left;
+  margin-bottom: 10px;
+}
+
+.preview-item-pill {
   width: 100%;
-}
-
-.developer-item-pill {
-  justify-content: flex-start;
-  /* padding: 4px 6px; */
-}
-
-.developer-avatar-pill {
-  width: 36px;
-  height: 36px;
-  border-radius: 18px;
-  margin-right: 12px;
-}
-
-.developer-name-pill {
-  font-size: 22px;
-}
-
-.settings-btn-pill {
-  margin-top: 14px;
+  min-height: 64px;
   border-radius: 20px;
-  padding: 10px 12px;
+  padding: 8px 14px;
 }
 
-.settings-text-pill {
+.preview-marquee-pill {
   font-size: 18px;
-  line-height: 22px;
+}
+
+.control-btn-pill {
+  width: 82px;
+  height: 82px;
+  margin: 4px 0;
+}
+
+.speed-value-pill {
+  font-size: 34px;
+  margin: 6px 0;
 }
 
 @media (width: 106) {
-  .game-name-pill {
-    width: 180px;
-    font-size: 18px;
-    line-height: 22px;
+  .main-area-pill {
+    padding: 88px 12px 16px;
   }
-}
-@media (width: 160) {
-  .card {
-    min-height: 230px;
-  }
-  .game-name{
+
+  .preview-section-pill {
     width: 100%;
-    font-size: 34px;
   }
 }
 
@@ -581,21 +576,36 @@ export default {
   }
 }
 
-@media (device-type: watch) and (shape: circle) {
-
-  .card{
-    min-height: 215px;
-  }
-  .game-name{
-    width: 100%;
-    font-size: 34px;
-  }
+@media (width: 233) {
   .main-shell {
     align-items: center;
   }
 
   .main-area {
     width: 80%;
+  }
+
+  .section-title {
+    display: none;
+  }
+
+  .control-buttons {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .control-btn {
+    width: 88px;
+    height: 88px;
+    margin: 0 10px;
+  }
+
+  .speed-value {
+    font-size: 38px;
+    margin: 0 12px;
+    min-width: 72px;
   }
 }
 </style>

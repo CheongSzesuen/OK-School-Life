@@ -1,44 +1,237 @@
 <template>
-  <div class="container">
-    <!-- 顶部返回按钮和标题 -->
-    <div class="header">
-      <image class="back-btn" src="../../common/assets/backButton/backButton.png" onclick="backToPrevious"></image>
-      <text class="title">捐赠支持</text>
-      <div class="header-placeholder"></div>
-    </div>
+  <stack class="container" @swipe="handlePageSwipe">
+    <div class="main-shell">
+      <div class="main-area {{ isPillScreen ? 'main-area-pill' : '' }} {{ isBand9Pro ? 'main-area-band9pro' : '' }}">
+        <div class="header" if="{{ !isPillScreen && !isBand9Pro && !isCircleScreen }}">
+          <image
+            class="back-btn"
+            src="{{ backButtonSrc }}"
+            onclick="backToPrevious"
+          ></image>
+          <text class="title">捐赠支持</text>
+          <div class="header-placeholder"></div>
+        </div>
 
-    <!-- 主内容区域 -->
-    <div class="main-area">
-      <!-- 二维码容器 -->
-      <div class="qrcode-wrapper">
-        <!-- 二维码区域 -->
-        <div class="qrcode-container">
-          <image class="qrcode-image" if="{{currentTab === 0}}"
-            src="../../common/assets/donationQRcode/alipay_qrcode.png"></image>
-          <image class="qrcode-image" if="{{currentTab === 1}}"
-            src="../../common/assets/donationQRcode/wechat_qrcode.png"></image>
+        <div class="qrcode-wrapper {{ isPillScreen ? 'qrcode-wrapper-pill' : '' }}">
+          <image
+            class="qrcode-image {{ isPillScreen ? 'qrcode-image-pill' : '' }}"
+            style="{{ qrcodeImageStyle }}"
+            if="{{ currentTab === 0 }}"
+            src="../../common/assets/donationQRcode/alipay_qrcode.png"
+          ></image>
+          <image
+            class="qrcode-image {{ isPillScreen ? 'qrcode-image-pill' : '' }}"
+            style="{{ qrcodeImageStyle }}"
+            if="{{ currentTab === 1 }}"
+            src="../../common/assets/donationQRcode/wechat_qrcode.png"
+          ></image>
         </div>
       </div>
     </div>
 
-    <!-- 底部切换按钮 -->
-    <div class="footer">
-      <image class="switch-button"
-        src="{{currentTab === 0 ? '/common/assets/swtichButton/swtichButtonAlipay.png' : '/common/assets/swtichButton/swtichButtonWechatpay.png'}}"
-        onclick="togglePaymentMethod"></image>
+    <image
+      if="{{ isPillScreen }}"
+      class="pill-floating-btn"
+      style="{{ pillTopButtonStyle }}"
+      src="{{ backButtonSrc }}"
+      onclick="backToPrevious"
+    ></image>
+
+    <image
+      if="{{ isPillScreen }}"
+      class="pill-floating-btn"
+      style="{{ pillBottomButtonStyle }}"
+      src="{{ currentTab === 0 ? '/common/assets/swtichButton/swtichButtonAlipay.png' : '/common/assets/swtichButton/swtichButtonWechatpay.png' }}"
+      onclick="switchPaymentMethod"
+    ></image>
+
+    <div if="{{ !isPillScreen }}" class="switch-button-container">
+      <image
+        class="switch-button"
+        src="{{ currentTab === 0 ? '/common/assets/swtichButton/swtichButtonAlipay.png' : '/common/assets/swtichButton/swtichButtonWechatpay.png' }}"
+        onclick="switchPaymentMethod"
+      ></image>
     </div>
-  </div>
+
+    <div class="pro-header" if="{{ isBand9Pro }}">
+      <div class="pro-header-center">
+        <text class="pro-header-time">{{ currentTime }}</text>
+        <text class="pro-header-title">捐赠支持</text>
+      </div>
+      <image
+        class="pro-header-btn pro-header-btn-left"
+        src="/common/btn/rect/Back_T.png"
+        onclick="backToPrevious"
+      ></image>
+    </div>
+
+    <div class="circle-header" if="{{ isCircleScreen }}">
+      <text class="circle-time circle-time1">{{ timeDigits[0] }}</text>
+      <text class="circle-time circle-time2">{{ timeDigits[1] }}</text>
+      <text class="circle-time circle-time3">:</text>
+      <text class="circle-time circle-time4">{{ timeDigits[2] }}</text>
+      <text class="circle-time circle-time5">{{ timeDigits[3] }}</text>
+      <div class="circle-page-title-wrap" onclick="backToPrevious">
+        <image class="circle-back-icon" src="/common/assets/btn/back.png"></image>
+        <text class="circle-page-title">捐赠支持</text>
+      </div>
+    </div>
+  </stack>
 </template>
 
 <script>
 import router from "@system.router"
+import {
+  getCachedDeviceProfile,
+  loadDeviceProfile
+} from "../../common/utils/device"
+
 export default {
   private: {
-    currentTab: 1 // 默认微信
+    currentTab: 1,
+    screenWidth: 160,
+    screenHeight: 480,
+    backButtonSrc: "../../common/assets/backButton/backButton.png",
+    moreButtonSrc: "/common/btn/rect/More_B.png",
+    pillTopButtonStyle: "",
+    pillBottomButtonStyle: "",
+    qrcodeImageStyle: "",
+    isPillScreen: false,
+    isBand9Pro: false,
+    isCircleScreen: false,
+    screenShape: "rect",
+    currentTime: "",
+    timeDigits: ["0", "0", "0", "0"],
+    clockTimer: null
   },
 
-  togglePaymentMethod() {
+  onInit() {
+    const screenWidth = global.screenSize && global.screenSize.width
+    const screenHeight = global.screenSize && global.screenSize.height
+    if (screenWidth) {
+      this.screenWidth = screenWidth
+      this.screenHeight = screenHeight || this.screenHeight
+      this.screenShape = global.screenShape || "rect"
+    } else {
+      const cached = getCachedDeviceProfile()
+      if (cached) {
+        this.screenWidth = cached.screenWidth
+        this.screenHeight = cached.screenHeight
+        this.screenShape = cached.screenShape
+      } else {
+        loadDeviceProfile((profile) => {
+          this.screenWidth = profile.screenWidth
+          this.screenHeight = profile.screenHeight
+          this.screenShape = profile.screenShape
+          this.updateFloatingButtons()
+        })
+      }
+    }
+    this.updateFloatingButtons()
+    this.startClock()
+  },
+
+  onDestroy() {
+    if (this.clockTimer) {
+      clearInterval(this.clockTimer)
+      this.clockTimer = null
+    }
+  },
+
+  startClock() {
+    this.updateCurrentTime()
+    if (!this.clockTimer) {
+      this.clockTimer = setInterval(() => {
+        this.updateCurrentTime()
+      }, 30000)
+    }
+  },
+
+  updateCurrentTime() {
+    const now = new Date()
+    const hours = `${now.getHours()}`.padStart(2, "0")
+    const minutes = `${now.getMinutes()}`.padStart(2, "0")
+    this.currentTime = `${hours}:${minutes}`
+    this.timeDigits = [hours[0], hours[1], minutes[0], minutes[1]]
+  },
+
+  updateFloatingButtons() {
+    this.isPillScreen = this.screenWidth === 192 || this.screenWidth === 212
+    this.isCircleScreen = this.screenShape === "circle"
+    this.isBand9Pro =
+      this.screenWidth === 336 ||
+      this.screenWidth === 160 ||
+      this.screenWidth === 432 ||
+      this.screenWidth === 216
+    this.updateQrcodeImageStyle()
+
+    if (this.isPillScreen) {
+      const topButtonWidth = 102
+      const topButtonHeight = 72
+      const switchButtonWidth = 102
+      const switchButtonHeight = 72
+      const topLeft = Math.max(0, Math.floor((this.screenWidth - topButtonWidth) / 2))
+      const bottomLeft = Math.max(0, Math.floor((this.screenWidth - switchButtonWidth) / 2))
+      this.pillTopButtonStyle = `position: absolute; top: 12px; left: ${topLeft}px; width: ${topButtonWidth}px; height: ${topButtonHeight}px;`
+      this.pillBottomButtonStyle = `position: absolute; bottom: 12px; left: ${bottomLeft}px; width: ${switchButtonWidth}px; height: ${switchButtonHeight}px;`
+      this.backButtonSrc = "/common/btn/Back_T.png"
+      return
+    }
+
+    this.pillTopButtonStyle = ""
+    this.pillBottomButtonStyle = ""
+
+    if (this.isBand9Pro) {
+      this.backButtonSrc = "/common/btn/rect/Back_T.png"
+      this.moreButtonSrc = "/common/btn/rect/More_B.png"
+      return
+    }
+
+    this.backButtonSrc = "../../common/assets/backButton/backButton.png"
+    this.moreButtonSrc = "/common/btn/rect/More_B.png"
+  },
+
+  updateQrcodeImageStyle() {
+    let horizontalPadding = 18
+    let wrapperPadding = 14
+    let maxInnerWidth = 272
+    let topReserved = 12
+    let bottomReserved = 104
+
+    if (this.isPillScreen) {
+      horizontalPadding = 12
+      wrapperPadding = 12
+      maxInnerWidth = this.screenWidth - horizontalPadding * 2 - wrapperPadding * 2
+      topReserved = 88
+      bottomReserved = 108
+    } else if (this.screenWidth === 106) {
+      horizontalPadding = 14
+      wrapperPadding = 12
+    } else if (this.screenWidth === 432 || this.screenWidth === 216) {
+      topReserved = 118
+      bottomReserved = 92
+    }
+
+    const widthLimitedSize = this.screenWidth - horizontalPadding * 2 - wrapperPadding * 2
+    const heightLimitedSize =
+      this.screenHeight - topReserved - bottomReserved - wrapperPadding * 2
+    const size = Math.max(
+      120,
+      Math.min(widthLimitedSize, maxInnerWidth, heightLimitedSize)
+    )
+    this.qrcodeImageStyle = `width: ${size}px; height: ${size}px;`
+  },
+
+  switchPaymentMethod() {
     this.currentTab = this.currentTab === 0 ? 1 : 0
+  },
+
+  handlePageSwipe(evt) {
+    if (!evt || (evt.direction !== "left" && evt.direction !== "right")) {
+      return
+    }
+
+    this.switchPaymentMethod()
   },
 
   backToPrevious() {
@@ -49,80 +242,260 @@ export default {
 
 <style>
 .container {
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
   width: 100%;
   height: 100%;
   background-color: #1a2e22;
 }
 
+.main-shell {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+}
+
+.main-area-band9pro {
+  justify-content: flex-start;
+  padding: 110px 18px 0;
+}
+
 .header {
   width: 100%;
-  height: 120px;
+  height: 96px;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 18px;
+}
+
+.pro-header {
+  width: 100%;
+  height: 96px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.circle-header {
+  width: 100%;
+  height: 105px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  align-items: center;
+}
+
+.circle-time {
+  position: absolute;
+  width: 55px;
+  height: 36px;
+  font-size: 28px;
+  font-weight: bold;
+  text-align: center;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  color: #999999;
+  transform-origin: 27.5px 18px;
+}
+
+.circle-time1 { left: 168px; top: 9px; transform: rotate(-14deg); }
+.circle-time2 { left: 189px; top: 6px; transform: rotate(-9deg); }
+.circle-time3 { left: 205.5px; top: 2px; }
+.circle-time4 { left: 222px; top: 6px; transform: rotate(9deg); }
+.circle-time5 { left: 242px; top: 9px; transform: rotate(14deg); }
+
+.circle-page-title-wrap {
+  position: absolute;
+  left: 0px;
+  top: 41px;
+  width: 100%;
+  height: 48px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.circle-back-icon {
+  width: 27px;
+  height: 27px;
+  margin-top: 0px;
+}
+
+.circle-page-title {
+  width: auto;
+  height: 48px;
+  font-size: 36px;
+  font-weight: bold;
+  padding-top: 0px;
+  text-align: center;
+  color: #ffffff;
+}
+
+.pro-header-btn {
+  width: 72px;
+  height: 72px;
+  position: absolute;
+  top: 6px;
+}
+
+.pro-header-btn-left {
+  left: 6px;
+}
+
+.pro-header-btn-right {
+  right: 6px;
+}
+
+.pro-header-center {
+  position: absolute;
+  left: 84px;
+  right: 84px;
+  height: 96px;
+  top: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.pro-header-time {
+  font-size: 24px;
+  line-height: 28px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+.pro-header-title {
+  width: 100%;
+  font-size: 32px;
+  line-height: 36px;
+  color: #ffffff;
+  font-weight: bold;
+  text-align: center;
 }
 
 .title {
-  font-size: 36px;
-  color: #bfe1d8;
+  font-size: 28px;
+  color: #f8f8ff;
   font-weight: bold;
-  text-align: center;
-  flex-grow: 1;
 }
 
 .header-placeholder {
-  width: 100px;
+  width: 84px;
+  height: 84px;
 }
 
 .back-btn {
-  width: 100px;
-  height: 100px;
+  width: 84px;
+  height: 84px;
 }
 
 .main-area {
-  flex-direction: column;
-  align-items: center;
   width: 100%;
-  padding: 10px 0;
-  flex-shrink: 1;
-}
-
-/* 二维码包装容器 */
-.qrcode-wrapper {
-  background-color: #69ba83;
-  border-radius: 25px;
-  padding: 10px; /* 减少内边距 */
-  width: 90%;
-  max-width: 440px;
   justify-content: center;
   align-items: center;
+  padding: 12px 18px 104px;
+  height: 100%;
 }
 
-.qrcode-container {
+.main-area-pill {
+  padding: 88px 12px 108px;
+}
+
+.qrcode-wrapper {
   width: 100%;
-  max-width: 400px;
+  max-width: 300px;
+  padding: 14px;
+  border-radius: 26px;
+  background-color: #69ba83;
+  align-items: center;
+  justify-content: center;
+}
+
+.qrcode-wrapper-pill {
+  width: 100%;
+  max-width: none;
+  padding: 12px;
+  border-radius: 22px;
 }
 
 .qrcode-image {
-  width: 100%;
-  height: 400px;
-  border-radius: 15px; /* 调整圆角以匹配容器 */
+  border-radius: 18px;
 }
 
-.footer {
-  width: 100%;
+.qrcode-image-pill {
+  border-radius: 16px;
+}
+
+.switch-button-container {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 14px;
   justify-content: center;
   align-items: center;
-  padding: 5px 0;
 }
 
 .switch-button {
-  width: 196px;
-  height: 100px;
-  margin-bottom: 10px;
+  width: 131px;
+  height: 67px;
+}
+
+.pill-floating-btn {
+  object-fit: contain;
+}
+
+@media (width: 106) {
+  .main-area-pill {
+    padding: 88px 14px 110px;
+  }
+}
+@media (width: 160) {
+.main-area{
+    padding-bottom: 104px;
+  }
+  .main-area-band9pro{
+    padding-top: 0px;
+  }
+  .main-shell{
+    padding-top:85px;
+  }
+}
+
+@media (width: 216) {
+  .main-shell{
+    padding-top:85px;
+  }
+
+  .pro-header-btn {
+    top: 8px;
+  }
+
+  .pro-header-btn-left {
+    left: 40px;
+  }
+
+  .pro-header-btn-right {
+    right: 40px;
+  }
+}
+
+@media (width: 233) {
+  .main-shell {
+    align-items: center;
+  }
+
+  .qrcode-wrapper {
+    width: 80%;
+    max-width: none;
+  }
 }
 </style>

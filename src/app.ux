@@ -1,4 +1,40 @@
-<import name="main" src="./pages/main/main"/>
-<template>
-  <main/>
-</template>
+<script>
+import device from "@system.device"
+import { resolveDeviceProfile } from "./common/utils/device"
+
+const fallbackProfile = resolveDeviceProfile()
+
+globalThis.screenSize = {
+  width: fallbackProfile.screenWidth,
+  height: fallbackProfile.screenHeight
+}
+globalThis.screenShape = fallbackProfile.screenShape
+globalThis.deviceProfile = fallbackProfile
+
+device.getInfo({
+  success(ret) {
+    const profile = resolveDeviceProfile(ret)
+    globalThis.screenSize = {
+      width: profile.screenWidth,
+      height: profile.screenHeight
+    }
+    globalThis.screenShape = profile.screenShape
+    globalThis.deviceProfile = profile
+    console.log(
+      `[app] device initialized: width=${profile.screenWidth}, height=${profile.screenHeight}, shape=${profile.screenShape}, key=${profile.key}`
+    )
+  },
+  fail(data, code) {
+    console.error(`[app] failed to get device info, code=${code}`)
+  }
+})
+
+export default {
+  onCreate() {
+    console.log("app created")
+  },
+  onDestroy() {
+    console.log("app destroyed")
+  }
+}
+</script>

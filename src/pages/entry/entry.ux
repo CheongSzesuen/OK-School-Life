@@ -1,0 +1,152 @@
+<template>
+  <div class="entry-page">
+    <image class="icon" src="/common/assets/icon/icon-v4.png"></image>
+
+    <div class="game-name-container">
+      <text class="game-name">OK School Life</text>
+    </div>
+
+    <text class="loading-text">加载中...</text>
+  </div>
+</template>
+
+<script>
+import router from "@system.router"
+
+export default {
+  private: {
+    navigateTimer: null
+  },
+
+  onInit() {
+    const randomTime = Math.floor(Math.random() * 1000) + 1000
+    this.navigateTimer = setTimeout(() => {
+      this.navigateToIndexPage()
+    }, randomTime)
+  },
+
+  onDestroy() {
+    if (this.navigateTimer) {
+      clearTimeout(this.navigateTimer)
+      this.navigateTimer = null
+    }
+  },
+
+  navigateToIndexPage() {
+    router.replace({
+      uri: "pages/index"
+    })
+  }
+}
+</script>
+
+<style>
+.entry-page {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background-color: #1a2e22;
+}
+
+.icon {
+  width: 200px;
+  height: 200px;
+  border-radius: 40px;
+  margin: 20px 0;
+}
+
+.game-name-container {
+  width: 100%;
+  padding: 0 15px;
+  margin: 20px 0;
+  justify-content: center;
+  align-items: center;
+}
+
+.game-name {
+  font-size: 55px;
+  color: #ffffff;
+  font-weight: bold;
+  text-align: center;
+  width: 100%;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.loading-text {
+  font-size: 40px;
+  color: #b4ffba;
+  animation: blink 1.5s infinite;
+  margin-top: 30px;
+  text-align: center;
+  width: 100%;
+  letter-spacing: 2px;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (width: 106) {
+  .entry-page {
+    padding: 8px;
+  }
+
+  .icon {
+    width: 190px;
+    height: 190px;
+    border-radius: 38px;
+    margin: 18px 0;
+  }
+
+  .game-name-container {
+    margin: 18px 0;
+  }
+
+  .game-name {
+    font-size: 52px;
+  }
+
+  .loading-text {
+    font-size: 34px;
+    margin-top: 26px;
+  }
+}
+
+@media (width: 160) {
+  .entry-page {
+    padding: 20px;
+  }
+
+  .icon {
+    border-radius: 30px;
+    margin-bottom: 40px;
+  }
+
+  .game-name-container {
+    max-width: 100%;
+    margin-top: 20px;
+    margin-bottom: 40px;
+  }
+
+  .game-name {
+    font-size: 38px;
+    letter-spacing: 1px;
+    word-wrap: break-word;
+    white-space: normal;
+  }
+
+  .loading-text {
+    font-size: 24px;
+    color: #aaaaaa;
+  }
+}
+</style>

@@ -5,3 +5,6 @@
 /dist
 /build
 .husky/
+/pref
+/scripts/__pycache__
+.codex
