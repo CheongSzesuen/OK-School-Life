@@ -8,7 +8,7 @@
   "scripts": {
     "start": "node scripts/patch_aiot_toolkit_ignore_pref.cjs && aiot server --watch",
     "build": "aiot build",
-    "release": "aiot release--enable-jsc",
+    "release": "aiot release --enable-jsc",
     "watch": "node scripts/patch_aiot_toolkit_ignore_pref.cjs && aiot watch",
     "lint": "eslint --fix \"src/**/*.{js,ux}\""
   },
